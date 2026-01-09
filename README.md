@@ -1,6 +1,6 @@
 # Debos recipes for Citronics' Lemon board
 
-This repository allows you to build a debian or ubuntu image to be flashed on the Lemon's fairphone 2 userdata partition.
+This repository allows you to build a debian or ubuntu image to be flashed on the Limeboard userdata partition.
 It uses a pre-built kernel and initramfs.
 
 After building, you should use `img2simg` to create a sparse image before flashing it with fastboot.
@@ -21,6 +21,14 @@ fastboot reboot
 ```
 
 ## Building
+
+Install debos:
+
+```
+sudo apt install debos
+```
+
+Then, run the following commands:
 
 ```
 sudo debos debian.yml # or ubuntu.yml
