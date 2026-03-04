@@ -1,0 +1,30 @@
+{
+  "name": "MobileDataManager",
+  "version": "v1.0.0",
+  "description": "Manage 4G/LTE QMI modems via ModemManager and NetworkManager",
+  "author": "Marc",
+  "author_uri": "https://github.com/Spin42",
+  "plugin_uri": "https://github.com/Spin42/MobileDataManager",
+  "plugin_docs": "https://github.com/Spin42/MobileDataManager#readme",
+  "license": "GPL-3.0",
+  "namespace": "RaspAP\\Plugins\\MobileDataManager",
+  "configuration": [],
+  "default_locale": "en_US",
+  "dependencies": {
+    "modem-manager": "1.0",
+    "network-manager": "1.0",
+    "libqmi-utils": "1.0"
+  },
+  "icon": "fas fa-signal",
+  "install_path": "plugins",
+  "javascript": {},
+  "manifest_version": "1.0",
+  "sudoers": [
+    "www-data ALL=(ALL) NOPASSWD:/usr/bin/mmcli *",
+    "www-data ALL=(ALL) NOPASSWD:/usr/bin/nmcli connection add *",
+    "www-data ALL=(ALL) NOPASSWD:/usr/bin/nmcli connection modify *",
+    "www-data ALL=(ALL) NOPASSWD:/usr/bin/nmcli connection up *",
+    "www-data ALL=(ALL) NOPASSWD:/usr/bin/nmcli connection down *",
+    "www-data ALL=(ALL) NOPASSWD:/usr/bin/nmcli connection delete *"
+  ]
+}

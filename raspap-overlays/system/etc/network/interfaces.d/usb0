@@ -1,0 +1,2 @@
+# usb0 is not managed via ifupdown in the RaspAP image.
+# Networking is handled by NetworkManager and dhcpcd.

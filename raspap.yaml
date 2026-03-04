@@ -1,0 +1,105 @@
+{{- $image := or .image "raspap-lemon.img" -}}
+
+architecture: armhf
+
+actions:
+  - action: debootstrap
+    suite: "bookworm"
+    components:
+      - main
+    mirror: https://deb.debian.org/debian
+    variant: minbase
+
+  - action: run
+    description: Enable non-free-firmware Debian repo
+    chroot: true
+    command: sed -i 's/main$/main non-free-firmware/g' /etc/apt/sources.list
+
+  - action: apt
+    description: Install base system packages
+    packages: [udev, ca-certificates, coreutils, sudo, openssh-server, adduser, systemd, systemd-sysv, systemd-resolved, nano, vim, qrtr-tools, libqmi-utils, rmtfs, udev, kmod, network-manager, modemmanager, wpasupplicant, ifupdown, isc-dhcp-client, isc-dhcp-server, systemd-timesyncd, bluetooth, kpartx, cloud-utils, fake-hwclock, wireless-regdb, usbutils, iputils-ping]
+
+  - action: apt
+    description: Install RaspAP dependencies
+    packages: [lighttpd, git, hostapd, dnsmasq, iptables-persistent, vnstat, qrencode, php8.2-cgi, jq, isoquery, dhcpcd-base, curl, wget, procps]
+
+  - action: run
+    description: Add citronics APT repository
+    chroot: true
+    command: echo "deb [trusted=yes] https://raw.githubusercontent.com/Citronics/deb-packages/main stable main" | tee /etc/apt/sources.list.d/citronics.list
+
+  - action: apt
+    description: Install Citronics kernel and firmware
+    packages: [initramfs-tools, citronics-initramfs, linux-firmware-lemon, linux-headers-6.12.0-citronics-lemon, linux-image-6.12.0-citronics-lemon]
+
+  - action: run
+    chroot: true
+    script: scripts/setup-user.sh
+
+  - action: run
+    chroot: true
+    command: echo citronics > /etc/hostname
+
+  - action: run
+    description: Set up /etc/hosts
+    chroot: true
+    command: |
+      echo "127.0.0.1	localhost" > /etc/hosts
+      echo "127.0.1.1	citronics" >> /etc/hosts
+
+  - action: overlay
+    description: Apply base system overlays
+    source: overlays
+    destination: /
+
+  - action: overlay
+    description: Apply RaspAP-specific overlays (override conflicting base configs)
+    source: raspap-overlays/system
+    destination: /
+
+  - action: run
+    description: Enable networking services (RaspAP variant)
+    chroot: true
+    script: scripts/setup-networking-raspap.sh
+
+  - action: run
+    description: Install RaspAP web interface
+    chroot: true
+    script: scripts/setup-raspap.sh
+
+  - action: overlay
+    description: Copy MobileDataManager plugin files to staging area
+    source: raspap-overlays/MobileDataManager
+    destination: /var/cache/MobileDataManager
+
+  - action: run
+    description: Install MobileDataManager plugin
+    chroot: true
+    script: scripts/setup-mobile-data-manager.sh
+
+  - action: run
+    chroot: true
+    command: update-initramfs -c -k 6.12.0-citronics-lemon
+
+  - action: image-partition
+    imagename: {{ $image }}
+    imagesize: 1500MB
+    partitiontype: msdos
+    mountpoints:
+      - mountpoint: /
+        partition: root
+      - mountpoint: /boot
+        partition: boot
+    partitions:
+      - name: boot
+        fs: ext2
+        start: 0%
+        end: 50MB
+        flags: [ boot ]
+      - name: root
+        fs: ext4
+        start: 50MB
+        end: 100%
+
+  - action: filesystem-deploy
+    description: Deploying filesystem onto image
