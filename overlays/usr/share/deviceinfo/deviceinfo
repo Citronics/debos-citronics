@@ -1,4 +1,4 @@
-deviceinfo_name="Lemon"
-deviceinfo_codename="lemon"
+deviceinfo_name="Lime"
+deviceinfo_codename="lime"
 deviceinfo_getty="ttyMSM0;115200"
 deviceinfo_arch="armv7"

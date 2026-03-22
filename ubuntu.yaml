@@ -1,4 +1,4 @@
-{{- $image := or .image "ubuntu-lemon.img" -}}
+{{- $image := or .image "ubuntu-lime.img" -}}
 
 architecture: armhf
 
@@ -23,10 +23,10 @@ actions:
   - action: run
     description: Add citronics APT repository
     chroot: true
-    command: echo "deb [trusted=yes] https://raw.githubusercontent.com/Citronics/deb-packages/main stable main" | tee /etc/apt/sources.list.d/citronics.list
+    command: echo "deb [trusted=yes] https://citronics.github.io/deb-packages/ stable main" | tee /etc/apt/sources.list.d/citronics.list
 
   - action: apt
-    packages: [initramfs-tools, citronics-initramfs, linux-firmware-lemon, linux-headers-6.12.0-citronics-lemon, linux-image-6.12.0-citronics-lemon]
+    packages: [initramfs-tools, citronics-lime]
 
   - action: run
     chroot: true
@@ -46,7 +46,7 @@ actions:
 
   - action: run
     chroot: true
-    command: update-initramfs -c -k 6.12.0-citronics-lemon
+    command: update-initramfs -c -k all
 
   - action: image-partition
     imagename: {{ $image }}
