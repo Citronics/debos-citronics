@@ -1,4 +1,5 @@
-{{- $image := or .image "ubuntu-lime.img" -}}
+{{- $board := .board -}}
+{{- $image := or .image (printf "ubuntu-lime-%s.img" $board) -}}
 
 architecture: armhf
 
@@ -26,7 +27,7 @@ actions:
     command: echo "deb [trusted=yes] https://citronics.github.io/deb-packages/ stable main" | tee /etc/apt/sources.list.d/citronics.list
 
   - action: apt
-    packages: [initramfs-tools, citronics-lime]
+    packages: [initramfs-tools, citronics-lime-{{ $board }}]
 
   - action: run
     chroot: true
@@ -40,9 +41,13 @@ actions:
     source: overlays
     destination: /
 
+  - action: overlay
+    source: boards/{{ $board }}/overlays
+    destination: /
+
   - action: run
     chroot: true
-    script: scripts/setup-networking.sh
+    script: boards/{{ $board }}/scripts/setup-networking.sh
 
   - action: run
     chroot: true
