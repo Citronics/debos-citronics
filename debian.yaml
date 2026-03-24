@@ -1,5 +1,6 @@
+{{- $carrier := .carrier -}}
 {{- $board := .board -}}
-{{- $image := or .image (printf "debian-lime-%s.img" $board) -}}
+{{- $image := or .image (printf "debian-%s-%s.img" $carrier $board) -}}
 
 architecture: armhf
 
@@ -25,7 +26,7 @@ actions:
     command: echo "deb [trusted=yes] https://citronics.github.io/deb-packages/ stable main" | tee /etc/apt/sources.list.d/citronics.list
 
   - action: apt
-    packages: [initramfs-tools, citronics-lime-{{ $board }}]
+    packages: [initramfs-tools, citronics-{{ $carrier }}-{{ $board }}]
 
   - action: run
     chroot: true
@@ -37,6 +38,10 @@ actions:
 
   - action: overlay
     source: overlays
+    destination: /
+
+  - action: overlay
+    source: carriers/{{ $carrier }}/overlays
     destination: /
 
   - action: overlay

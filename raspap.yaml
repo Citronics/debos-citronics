@@ -1,5 +1,6 @@
+{{- $carrier := .carrier -}}
 {{- $board := .board -}}
-{{- $image := or .image (printf "raspap-lime-%s.img" $board) -}}
+{{- $image := or .image (printf "raspap-%s-%s.img" $carrier $board) -}}
 
 architecture: armhf
 
@@ -31,7 +32,7 @@ actions:
 
   - action: apt
     description: Install Citronics kernel and firmware
-    packages: [initramfs-tools, citronics-lime-{{ $board }}]
+    packages: [initramfs-tools, citronics-{{ $carrier }}-{{ $board }}]
 
   - action: run
     chroot: true
@@ -51,6 +52,11 @@ actions:
   - action: overlay
     description: Apply base system overlays
     source: overlays
+    destination: /
+
+  - action: overlay
+    description: Apply carrier-specific overlays
+    source: carriers/{{ $carrier }}/overlays
     destination: /
 
   - action: overlay
