@@ -1,0 +1,5 @@
+carrierinfo_name="Lime"
+carrierinfo_codename="lime"
+carrierinfo_kernel_suffix="-citronics-lime"
+carrierinfo_firmware_package="linux-firmware-lime"
+carrierinfo_apt_repo="https://citronics.github.io/deb-packages/"
