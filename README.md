@@ -1,6 +1,6 @@
-# Debos recipes for Citronics' Lime board
+# Debos recipes for Citronics boards
 
-This repository allows you to build a debian, ubuntu, or raspap image to be flashed on the Lime board userdata partition.
+This repository allows you to build a debian, ubuntu, or raspap image to be flashed on a Citronics board's userdata partition.
 It uses pre-built kernel, firmware, and initramfs packages from the [Citronics APT repository](https://citronics.github.io/deb-packages/).
 
 After building, you should use `img2simg` to create a sparse image before flashing it with fastboot.
@@ -31,12 +31,26 @@ sudo apt install debos
 Then, run the following commands:
 
 ```
-sudo debos -t board:fp2 debian.yaml # or ubuntu.yaml or raspap.yaml
+sudo debos -t carrier:lime -t board:fp2 debian.yaml # or ubuntu.yaml or raspap.yaml
 img2simg debian-lime-fp2.img sparse-debian-lime-fp2.img # or ubuntu-lime-fp2.img / raspap-lime-fp2.img
 # Configure the dipswitch in fairphone 2 mode (fp2) and follow the instructions to set it in fastboot mode
 fastboot flash userdata sparse-debian-lime-fp2.img
 # Unplug the board once done and reconfigure the dipswitch back to host mode
 # Plug it and enjoy running debian or ubuntu on your Lime board
+```
+
+### Carrier Parameter
+
+The `carrier` parameter is required. Omitting it will cause the build to fail.
+
+Currently supported carriers:
+- `lime`: Citronics Lime board
+
+The carrier determines: kernel suffix, firmware package, carrier-specific overlays, and carrier identity metadata (`carrierinfo`).
+
+Example:
+```
+sudo debos -t carrier:lime -t board:fp2 debian.yaml
 ```
 
 ### Board Parameter
@@ -48,7 +62,7 @@ Currently supported boards:
 
 Example:
 ```
-sudo debos -t board:fp2 debian.yaml
+sudo debos -t carrier:lime -t board:fp2 debian.yaml
 ```
 
 ## Board Directory Structure
@@ -56,9 +70,12 @@ sudo debos -t board:fp2 debian.yaml
 The repository uses a per-board directory structure for customization:
 
 ```
+carriers/
+└── lime/
+    └── overlays/   # Lime-specific overlay files (carrierinfo)
 boards/
 └── fp2/
-    ├── overlays/   # FP2-specific overlay files (extlinux.conf, deviceinfo, etc.)
+    ├── overlays/   # FP2-specific overlay files (deviceinfo, extlinux.conf, etc.)
     └── scripts/    # FP2-specific scripts (setup-networking.sh)
 ```
 
@@ -68,8 +85,17 @@ To add support for a new board, follow this pattern:
 
 1. Create `boards/<board>/overlays/` with board-specific files.
 2. Create `boards/<board>/scripts/setup-networking.sh` for board-specific service setup.
-3. Create a `citronics-lime-<board>` meta-package in the [deb-packages](https://github.com/Citronics/deb-packages) repository.
-4. Build with `sudo debos -t board:<board> debian.yaml`.
+3. Create a `citronics-<carrier>-<board>` meta-package in the [deb-packages](https://github.com/Citronics/deb-packages) repository.
+4. Build with `sudo debos -t carrier:<carrier> -t board:<board> debian.yaml`.
+
+### Adding a New Carrier
+
+To add support for a new carrier, follow this pattern:
+
+1. Create `carriers/<carrier>/overlays/usr/share/carrierinfo/carrierinfo` with carrier metadata.
+2. Create carrier-specific kernel and firmware repos (e.g., `<carrier>-image` and `linux-firmware-<carrier>`).
+3. Add carrier meta-packages to the [deb-packages](https://github.com/Citronics/deb-packages) repository.
+4. Build with `sudo debos -t carrier:<carrier> -t board:<board> debian.yaml`.
 
 ## Flashing pre built images
 
