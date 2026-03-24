@@ -31,17 +31,49 @@ sudo apt install debos
 Then, run the following commands:
 
 ```
-sudo debos debian.yaml # or ubuntu.yaml or raspap.yaml
-img2simg debian-lime.img sparse-debian-lime.img # or ubuntu-lime.img / raspap-lime.img
+sudo debos -t board:fp2 debian.yaml # or ubuntu.yaml or raspap.yaml
+img2simg debian-lime-fp2.img sparse-debian-lime-fp2.img # or ubuntu-lime-fp2.img / raspap-lime-fp2.img
 # Configure the dipswitch in fairphone 2 mode (fp2) and follow the instructions to set it in fastboot mode
-fastboot flash userdata sparse-debian-lime.img
+fastboot flash userdata sparse-debian-lime-fp2.img
 # Unplug the board once done and reconfigure the dipswitch back to host mode
 # Plug it and enjoy running debian or ubuntu on your Lime board
 ```
 
+### Board Parameter
+
+The `board` parameter is required. Omitting it will cause the build to fail.
+
+Currently supported boards:
+- `fp2`: Fairphone 2
+
+Example:
+```
+sudo debos -t board:fp2 debian.yaml
+```
+
+## Board Directory Structure
+
+The repository uses a per-board directory structure for customization:
+
+```
+boards/
+└── fp2/
+    ├── overlays/   # FP2-specific overlay files (extlinux.conf, deviceinfo, etc.)
+    └── scripts/    # FP2-specific scripts (setup-networking.sh)
+```
+
+### Adding a New Board
+
+To add support for a new board, follow this pattern:
+
+1. Create `boards/<board>/overlays/` with board-specific files.
+2. Create `boards/<board>/scripts/setup-networking.sh` for board-specific service setup.
+3. Create a `citronics-lime-<board>` meta-package in the [deb-packages](https://github.com/Citronics/deb-packages) repository.
+4. Build with `sudo debos -t board:<board> debian.yaml`.
+
 ## Flashing pre built images
 
-Go to releases on this github page, select one, download either `sparse-debian-lime.img`, `sparse-ubuntu-lime.img`, or `sparse-raspap-lime.img` and flash it with fastboot as explained above.
+Go to releases on this github page, select one, download either `sparse-debian-lime-fp2.img`, `sparse-ubuntu-lime-fp2.img`, or `sparse-raspap-lime-fp2.img` and flash it with fastboot as explained above.
 
 ## Using Wifi
 
