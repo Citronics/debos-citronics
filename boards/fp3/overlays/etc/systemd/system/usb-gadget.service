@@ -1,0 +1,14 @@
+[Unit]
+Description=USB Gadget (NCM network) setup for Fairphone 3
+After=local-fs.target
+Before=network-pre.target isc-dhcp-server.service set-mac-from-serial.service
+DefaultDependencies=no
+Wants=network-pre.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/libexec/usb-gadget-setup
+
+[Install]
+WantedBy=multi-user.target

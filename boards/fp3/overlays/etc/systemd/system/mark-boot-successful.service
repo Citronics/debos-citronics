@@ -1,0 +1,13 @@
+[Unit]
+Description=Mark current A/B boot slot as successful
+After=local-fs.target systemd-udev-settle.service
+Before=multi-user.target
+DefaultDependencies=no
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/libexec/mark-boot-successful
+
+[Install]
+WantedBy=multi-user.target

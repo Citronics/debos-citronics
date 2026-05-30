@@ -1,0 +1,15 @@
+[Unit]
+Description=Deferred load of Himax HX83112B touchscreen driver
+After=systemd-udev-settle.service
+DefaultDependencies=no
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStartPre=/bin/sleep 2
+ExecStart=/usr/sbin/modprobe himax_hx83112b
+ExecStartPost=/usr/bin/udevadm settle
+ExecStartPost=/bin/sh -c 'echo 0-0048 > /sys/bus/i2c/drivers/Himax-hx83112b-TS/bind || true'
+
+[Install]
+WantedBy=sysinit.target

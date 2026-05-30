@@ -1,0 +1,85 @@
+{{- $carrier := .carrier -}}
+{{- $board := .board -}}
+{{- $architecture := .architecture -}}
+{{- $image := or .image (printf "ubuntu-%s-%s.img" $carrier $board) -}}
+
+architecture: {{ .architecture }}
+
+actions:
+  - action: debootstrap
+    suite: "noble"
+    components:
+      - main
+      - universe
+    mirror: http://ports.ubuntu.com/ubuntu-ports
+    variant: minbase
+    keyring-file: /usr/share/keyrings/ubuntu-archive-keyring.gpg
+
+  - action: run
+    description: Enable non-free-firmware Ubuntu repo
+    chroot: true
+    command: sed -i 's/main$/main non-free-firmware/g' /etc/apt/sources.list
+
+  - action: apt
+    packages: [ca-certificates, coreutils, sudo, openssh-server, adduser, systemd, systemd-sysv, systemd-resolved, nano, vim, qrtr-tools, libqmi-utils, rmtfs, udev, kmod, network-manager, modemmanager, wpasupplicant, ifupdown, isc-dhcp-client, isc-dhcp-server, systemd-timesyncd, bluetooth, kpartx, cloud-utils, fake-hwclock, wireless-regdb, usbutils, iputils-ping, initramfs-tools]
+
+  - action: overlay
+    description: Inject local .deb packages
+    source: local-debs
+    destination: /tmp/local-debs
+
+  - action: run
+    description: Install local citronics packages
+    chroot: true
+    command: dpkg -i --force-depends /tmp/local-debs/*.deb && rm -rf /tmp/local-debs
+
+  - action: run
+    chroot: true
+    script: scripts/setup-user.sh
+
+  - action: run
+    chroot: true
+    command: echo citronics > /etc/hostname
+
+  - action: overlay
+    source: overlays
+    destination: /
+
+  - action: overlay
+    source: carriers/{{ $carrier }}/overlays
+    destination: /
+
+  - action: overlay
+    source: boards/{{ $board }}/overlays
+    destination: /
+
+  - action: run
+    chroot: true
+    script: boards/{{ $board }}/scripts/setup-networking.sh
+
+  - action: run
+    chroot: true
+    command: update-initramfs -c -k all
+
+  - action: image-partition
+    imagename: {{ $image }}
+    imagesize: 750MB
+    partitiontype: msdos
+    mountpoints:
+      - mountpoint: /
+        partition: root
+      - mountpoint: /boot
+        partition: boot
+    partitions:
+      - name: boot
+        fs: ext2
+        start: 0%
+        end: 50MB
+        flags: [ boot ]
+      - name: root
+        fs: ext4
+        start: 50MB
+        end: 100%
+
+  - action: filesystem-deploy
+    description: Deploying filesystem onto image

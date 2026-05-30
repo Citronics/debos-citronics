@@ -1,0 +1,5 @@
+#!/bin/sh
+
+echo "mark-boot-successful: marking current boot slot as successful"
+qbootctl -m
+echo "mark-boot-successful: done"

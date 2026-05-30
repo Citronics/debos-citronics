@@ -1,0 +1,74 @@
+#!/bin/bash
+
+CONFIGFS="/sys/kernel/config/usb_gadget"
+GADGET="$CONFIGFS/g1"
+
+echo "usb-gadget-setup: mounting configfs"
+if ! mountpoint -q /sys/kernel/config; then
+    mount -t configfs configfs /sys/kernel/config
+fi
+
+echo "usb-gadget-setup: forcing peripheral mode via USB role switch"
+for role_path in /sys/class/usb_role/*/role; do
+    [ -e "$role_path" ] && echo "device" > "$role_path" 2>/dev/null && echo "usb-gadget-setup: set $role_path to device"
+done
+for port_path in /sys/class/typec/port*/data_role; do
+    [ -e "$port_path" ] && echo "device" > "$port_path" 2>/dev/null && echo "usb-gadget-setup: set $port_path to device"
+done
+
+echo "usb-gadget-setup: waiting for UDC"
+UDC=""
+for i in $(seq 1 15); do
+    UDC=$(ls /sys/class/udc 2>/dev/null | head -1)
+    [ -n "$UDC" ] && break
+    sleep 1
+done
+
+if [ -z "$UDC" ]; then
+    echo "usb-gadget-setup: no UDC found after 15s, aborting"
+    exit 1
+fi
+echo "usb-gadget-setup: found UDC: $UDC"
+
+if [ -e "$GADGET/UDC" ] && [ -n "$(cat $GADGET/UDC 2>/dev/null)" ]; then
+    echo "usb-gadget-setup: gadget already active"
+    exit 0
+fi
+
+echo "usb-gadget-setup: creating gadget"
+mkdir -p "$GADGET"
+echo "0x1d6b" > "$GADGET/idVendor"
+echo "0x0104" > "$GADGET/idProduct"
+echo "0x0100" > "$GADGET/bcdDevice"
+echo "0x0200" > "$GADGET/bcdUSB"
+
+mkdir -p "$GADGET/strings/0x409"
+SERIAL=$(awk '/^Serial/ {print $3}' /proc/cpuinfo 2>/dev/null || echo "citronics")
+echo "$SERIAL"        > "$GADGET/strings/0x409/serialnumber"
+echo "Fairphone"      > "$GADGET/strings/0x409/manufacturer"
+echo "Fairphone 3"    > "$GADGET/strings/0x409/product"
+
+echo "usb-gadget-setup: creating NCM function"
+mkdir -p "$GADGET/functions/ncm.usb0"
+
+echo "usb-gadget-setup: creating configuration"
+mkdir -p "$GADGET/configs/c.1/strings/0x409"
+echo "USB Network" > "$GADGET/configs/c.1/strings/0x409/configuration"
+echo 500 > "$GADGET/configs/c.1/MaxPower"
+
+ln -sf "$GADGET/functions/ncm.usb0" "$GADGET/configs/c.1/"
+
+echo "usb-gadget-setup: binding UDC $UDC"
+echo "$UDC" > "$GADGET/UDC"
+sleep 1
+
+IFACE=$(cat "$GADGET/functions/ncm.usb0/ifname" 2>/dev/null)
+echo "usb-gadget-setup: network interface is $IFACE"
+
+if [ -n "$IFACE" ] && [ "$IFACE" != "usb0" ]; then
+    echo "usb-gadget-setup: renaming $IFACE to usb0"
+    ip link set "$IFACE" down
+    ip link set "$IFACE" name usb0
+fi
+
+echo "usb-gadget-setup: done"
