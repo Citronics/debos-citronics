@@ -1,8 +1,9 @@
 {{- $carrier := .carrier -}}
 {{- $board := .board -}}
+{{- $architecture := .architecture -}}
 {{- $image := or .image (printf "debian-%s-%s.img" $carrier $board) -}}
 
-architecture: armhf
+architecture: {{ .architecture }}
 
 actions:
   - action: debootstrap
