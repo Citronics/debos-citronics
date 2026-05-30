@@ -1,0 +1,4 @@
+deviceinfo_getty="ttyMSM0;115200"
+deviceinfo_arch="aarch64"
+deviceinfo_dtb="sdm632-fairphone-fp3.dtb sdm632-fairphone-fp3p.dtb"
+deviceinfo_modules_initfs=""

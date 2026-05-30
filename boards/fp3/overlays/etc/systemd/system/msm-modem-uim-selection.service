@@ -1,0 +1,13 @@
+[Unit]
+Description=Select UIM slot and application on the embedded QMI modem
+After=rmtfs.service
+Before=ofono.service modemmanager.service
+
+[Service]
+Type=notify
+RemainAfterExit=yes
+ExecStart=/usr/libexec/msm-modem-uim-selection
+Environment=SIM_WAIT_TIME=5
+
+[Install]
+WantedBy=multi-user.target
