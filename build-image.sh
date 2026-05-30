@@ -115,22 +115,26 @@ mount -t sysfs sysfs "$ROOTFS/sys"
 mount --rbind /dev "$ROOTFS/dev"
 mount -t devpts devpts "$ROOTFS/dev/pts"
 
-echo "=== Installing local .deb packages (arch: $ARCH) ==="
-if [ -d "/citronics/debos-citronics/local-debs" ]; then
-  mkdir -p "$ROOTFS/tmp/local-debs"
-  find /citronics/debos-citronics/local-debs -maxdepth 1 -name "*.deb" | while read DEB; do
-    DEB_ARCH=$(dpkg-deb -f "$DEB" Architecture 2>/dev/null || echo "unknown")
-    if [ "$DEB_ARCH" = "$ARCH" ] || [ "$DEB_ARCH" = "all" ]; then
-      cp "$DEB" "$ROOTFS/tmp/local-debs/"
-      echo "Including: $(basename $DEB) (arch: $DEB_ARCH)"
-    else
-      echo "Skipping: $(basename $DEB) (arch: $DEB_ARCH, target: $ARCH)"
-    fi
-  done
-  DEBS_TO_INSTALL=$(find "$ROOTFS/tmp/local-debs" -name "*.deb" 2>/dev/null)
-  if [ -n "$DEBS_TO_INSTALL" ]; then
-    chroot "$ROOTFS" bash -c "dpkg -i --force-depends /tmp/local-debs/*.deb" || echo "WARNING: Some packages failed to install"
+echo "Installing common local .deb packages"
+if [ -d "/citronics/debos-citronics/local-debs/common" ]; then
+  COMMON_DEBS=$(find /citronics/debos-citronics/local-debs/common -maxdepth 1 -name "*.deb" 2>/dev/null)
+  if [ -n "$COMMON_DEBS" ]; then
+    mkdir -p "$ROOTFS/tmp/local-debs"
+    cp /citronics/debos-citronics/local-debs/common/*.deb "$ROOTFS/tmp/local-debs/"
   fi
+fi
+
+echo "Installing $PHONE-specific local .deb packages"
+if [ -d "/citronics/debos-citronics/local-debs/$PHONE" ]; then
+  PHONE_DEBS=$(find /citronics/debos-citronics/local-debs/$PHONE -maxdepth 1 -name "*.deb" 2>/dev/null)
+  if [ -n "$PHONE_DEBS" ]; then
+    mkdir -p "$ROOTFS/tmp/local-debs"
+    cp /citronics/debos-citronics/local-debs/$PHONE/*.deb "$ROOTFS/tmp/local-debs/"
+  fi
+fi
+
+if [ -d "$ROOTFS/tmp/local-debs" ]; then
+  chroot "$ROOTFS" bash -c "dpkg -i --force-depends /tmp/local-debs/*.deb" || echo "WARNING: Some packages failed to install"
   rm -rf "$ROOTFS/tmp/local-debs"
 fi
 
@@ -141,7 +145,7 @@ ls "$ROOTFS/usr/share/citronics-initramfs/" 2>/dev/null && echo "citronics-initr
 echo "=== Ensuring citronics-initramfs files are present ==="
 if [ ! -f "$ROOTFS/etc/initramfs-tools/hooks/01-copy-custom-init" ]; then
   echo "WARNING: Hooks missing - extracting directly from deb"
-  dpkg-deb -x /citronics/debos-citronics/local-debs/citronics-initramfs_1.0.9_all.deb "$ROOTFS/"
+  dpkg-deb -x /citronics/debos-citronics/local-debs/common/citronics-initramfs_1.0.9_all.deb "$ROOTFS/"
   echo "Direct extraction complete, hooks now:"
   ls "$ROOTFS/etc/initramfs-tools/hooks/"
 fi

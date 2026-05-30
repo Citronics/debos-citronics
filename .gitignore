@@ -1,3 +1,5 @@
 *.img
 output/
-local-debs/*.deb
+local-debs/common/*.deb
+local-debs/fp2/*.deb
+local-debs/fp3/*.deb
