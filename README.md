@@ -25,7 +25,7 @@ unudhcpd-deb ──────────────────────�
 - **citronics-firmware**: Firmware .deb packaging for FP2 and FP3.
 - **citronics-initramfs**: Custom initramfs with USB networking, rootfs resize, and debug shell.
 - **unudhcpd-deb**: USB DHCP daemon for device-side networking.
-- **deb-packages**: GitHub Pages APT repo aggregating all the above.
+- **deb-packages**: GitHub Pages APT repo aggregating all the above — live at `https://citronics.github.io/deb-packages/`.
 - **debos-citronics**: THIS repo — builds bootable disk images using packages from the APT repo.
 
 ## Supported Boards
