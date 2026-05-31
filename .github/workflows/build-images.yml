@@ -20,6 +20,11 @@ jobs:
       matrix:
         os: [ubuntu, debian]
         board: [fp2, fp3]
+        include:
+          - board: fp2
+            architecture: armhf
+          - board: fp3
+            architecture: arm64
 
     steps:
       - uses: actions/checkout@v4
@@ -34,6 +39,7 @@ jobs:
           sudo debos --disable-fakemachine \
             -t board:${{ matrix.board }} \
             -t carrier:lime \
+            -t architecture:${{ matrix.architecture }} \
             ${{ matrix.os }}.yaml
 
       - name: Compress image
