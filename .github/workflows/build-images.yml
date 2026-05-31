@@ -1,0 +1,97 @@
+name: Build OS Images
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+  repository_dispatch:
+    types: [deps-updated]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build ${{ matrix.os }}-lime-${{ matrix.board }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu, debian]
+        board: [fp2, fp3]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y debos qemu-user-static
+
+      - name: Build image
+        run: |
+          sudo debos --disable-fakemachine \
+            -t board:${{ matrix.board }} \
+            -t carrier:lime \
+            ${{ matrix.os }}.yaml
+
+      - name: Compress image
+        run: |
+          xz -T0 -9 ${{ matrix.os }}-lime-${{ matrix.board }}.img
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.os }}-lime-${{ matrix.board }}
+          path: ${{ matrix.os }}-lime-${{ matrix.board }}.img.xz
+
+  release:
+    name: Publish Release
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Determine release tag and type
+        id: release-info
+        run: |
+          if [[ "${{ github.event_name }}" == "push" && "${{ github.ref }}" == refs/tags/v* ]]; then
+            TAG="${{ github.ref_name }}"
+            echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+            echo "prerelease=false" >> "$GITHUB_OUTPUT"
+            echo "nightly=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=nightly" >> "$GITHUB_OUTPUT"
+            echo "prerelease=true" >> "$GITHUB_OUTPUT"
+            echo "nightly=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Delete existing nightly release (if nightly)
+        if: steps.release-info.outputs.nightly == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release delete nightly --yes 2>/dev/null || true
+          git push origin :refs/tags/nightly 2>/dev/null || true
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${{ steps.release-info.outputs.tag }}"
+          PRERELEASE="${{ steps.release-info.outputs.prerelease }}"
+          PRERELEASE_FLAG=""
+          if [[ "$PRERELEASE" == "true" ]]; then
+            PRERELEASE_FLAG="--prerelease"
+          fi
+          gh release create "${TAG}" \
+            ${PRERELEASE_FLAG} \
+            --title "${TAG}" \
+            artifacts/**/*.img.xz
