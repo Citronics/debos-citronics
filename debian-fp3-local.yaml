@@ -11,7 +11,7 @@ actions:
     components:
       - main
       - non-free-firmware
-    mirror: https://deb.debian.org/debian
+    mirror: http://deb.debian.org/debian
     variant: minbase
 
   - action: run
@@ -20,15 +20,22 @@ actions:
     command: sed -i 's/^Components: main$/Components: main non-free-firmware/' /etc/apt/sources.list.d/debian.sources
 
   - action: apt
-    packages: [udev, ca-certificates, coreutils, sudo, openssh-server, adduser, systemd, systemd-sysv, systemd-resolved, nano, vim, qrtr-tools, libqmi-utils, rmtfs, udev, kmod, network-manager, modemmanager, wpasupplicant, ifupdown, isc-dhcp-client, isc-dhcp-server, systemd-timesyncd, bluetooth, kpartx, cloud-utils, fake-hwclock, wireless-regdb, usbutils, iputils-ping]
+    packages: [ca-certificates, coreutils, sudo, openssh-server, adduser, systemd, systemd-sysv, systemd-resolved, nano, vim, qrtr-tools, libqmi-utils, rmtfs, udev, kmod, network-manager, modemmanager, wpasupplicant, ifupdown, isc-dhcp-client, isc-dhcp-server, systemd-timesyncd, bluetooth, kpartx, cloud-utils, fake-hwclock, wireless-regdb, usbutils, iputils-ping, initramfs-tools]
+
+  - action: overlay
+    description: Inject local .deb packages (common)
+    source: local-debs/common
+    destination: /tmp/local-debs
+
+  - action: overlay
+    description: Inject board-specific local .deb packages
+    source: local-debs/{{ $board }}
+    destination: /tmp/local-debs
 
   - action: run
-    description: Add citronics APT repository
+    description: Install local citronics packages
     chroot: true
-    command: echo "deb [trusted=yes] https://citronics.github.io/deb-packages/ stable main" | tee /etc/apt/sources.list.d/citronics.list
-
-  - action: apt
-    packages: [initramfs-tools, citronics-{{ $carrier }}-{{ $board }}]
+    command: dpkg -i --force-depends /tmp/local-debs/*.deb && rm -rf /tmp/local-debs
 
   - action: run
     chroot: true

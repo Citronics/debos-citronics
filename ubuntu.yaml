@@ -7,7 +7,7 @@ architecture: {{ .architecture }}
 
 actions:
   - action: debootstrap
-    suite: "noble"
+    suite: "resolute"
     components:
       - main
       - universe

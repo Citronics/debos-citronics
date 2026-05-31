@@ -93,7 +93,7 @@ if [ "$SUITE" = "ubuntu" ]; then
   SUITE_NAME="resolute"
 else
   MIRROR="http://deb.debian.org/debian"
-  SUITE_NAME="bookworm"
+  SUITE_NAME="trixie"
 fi
 
 mmdebstrap \
