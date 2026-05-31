@@ -44,7 +44,7 @@ jobs:
 
       - name: Compress image
         run: |
-          xz -T0 -9 ${{ matrix.os }}-lime-${{ matrix.board }}.img
+          sudo xz -T0 -9 ${{ matrix.os }}-lime-${{ matrix.board }}.img
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
