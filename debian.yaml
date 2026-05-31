@@ -1,6 +1,6 @@
 {{- $carrier := .carrier -}}
 {{- $board := .board -}}
-{{- $architecture := .architecture -}}
+{{- $architecture := or .architecture (cond (eq $board "fp3") "arm64" "armhf") -}}
 {{- $image := or .image (printf "debian-%s-%s.img" $carrier $board) -}}
 
 architecture: {{ .architecture }}
