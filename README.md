@@ -1,125 +1,161 @@
 # Debos recipes for Citronics boards
 
-This repository allows you to build a debian, ubuntu, or raspap image to be flashed on a Citronics board's userdata partition.
-It uses pre-built kernel, firmware, and initramfs packages from the [Citronics APT repository](https://citronics.github.io/deb-packages/).
+This repository contains debos recipes to build bootable disk images for Citronics boards. It serves as the main entry point for the Citronics ecosystem, aggregating packages into ready-to-flash images.
 
-After building, you should use `img2simg` to create a sparse image before flashing it with fastboot.
+## Ecosystem Overview
 
-It is part of the `android-sdk-libsparse-utils` on debian bookworm so be sure to install it with:
-```
-sudo apt install android-sdk-libsparse-utils
-```
-
-Or the equivalent for your linux distribution and version.
-
-## Prerequisite
-
-You need to have lk2nd flashed on the boot partition of your Lime's fairphone 2 for these images to work. Download it [here](https://github.com/Citronics/lk2nd-noscreen/releases/download/20.0-noscreen/lk2nd-20.0-hack-noscreen.img) and run:
-```
-fastboot flash boot lk2nd-20.0-hack-noscreen.img
-fastboot reboot
-```
-
-## Building
-
-Install debos:
+The Citronics ecosystem consists of several specialized repositories that feed into the final image build process:
 
 ```
-sudo apt install debos
+citronics-kernel ──────────────────────────────┐
+citronics-firmware ─────────────────────────── ▼
+citronics-initramfs ───────────────────────► deb-packages (APT repo)
+unudhcpd-deb ──────────────────────────────────┘
+                                               │
+                                               ▼
+                                        debos-citronics
+                                       (builds disk images)
+                                               │
+                                               ▼
+                                     ubuntu.img / debian.img
+                                    (flashed via fastboot)
 ```
 
-Then, run the following commands:
+- **citronics-kernel**: Kernel packaging for FP2 (armhf) and FP3 (arm64).
+- **citronics-firmware**: Firmware .deb packaging for FP2 and FP3.
+- **citronics-initramfs**: Custom initramfs with USB networking, rootfs resize, and debug shell.
+- **unudhcpd-deb**: USB DHCP daemon for device-side networking.
+- **deb-packages**: GitHub Pages APT repo aggregating all the above.
+- **debos-citronics**: THIS repo — builds bootable disk images using packages from the APT repo.
 
+## Supported Boards
+
+| Board | Name | Architecture | Carrier |
+|-------|------|--------------|---------|
+| `fp2` | Fairphone 2 | armhf | lime |
+| `fp3` | Fairphone 3 | arm64 | lime |
+
+Architecture is auto-derived from the board name (fp3 is arm64, others are armhf). You can override it with `-t architecture:arm64` if needed.
+
+## Available Recipes
+
+- `ubuntu.yaml`: Ubuntu Resolute (26.04 LTS).
+- `debian.yaml`: Debian Trixie.
+- `raspap.yaml`: Debian Bookworm with RaspAP WiFi AP and MobileDataManager.
+
+## Prerequisites
+
+You must flash lk2nd to the boot partition for these images to work:
+
+- **FP3**: Flash `lk2nd-msm8953.img` to `boot_a` partition.
+- **FP2**: Flash `lk2nd-20.0-hack-noscreen.img` to `boot` partition.
+
+Install debos and sparse image tools:
+
+```bash
+sudo apt install debos android-sdk-libsparse-utils
 ```
-sudo debos -t carrier:lime -t board:fp2 debian.yaml # or ubuntu.yaml or raspap.yaml
-img2simg debian-lime-fp2.img sparse-debian-lime-fp2.img # or ubuntu-lime-fp2.img / raspap-lime-fp2.img
-# Configure the dipswitch in fairphone 2 mode (fp2) and follow the instructions to set it in fastboot mode
-fastboot flash userdata sparse-debian-lime-fp2.img
-# Unplug the board once done and reconfigure the dipswitch back to host mode
-# Plug it and enjoy running debian or ubuntu on your Lime board
-```
 
-### Carrier Parameter
+## Building images
 
-The `carrier` parameter is required. Omitting it will cause the build to fail.
+Run debos with the carrier and board parameters:
 
-Currently supported carriers:
-- `lime`: Citronics Lime board
+```bash
+# FP2 — Ubuntu
+sudo debos -t carrier:lime -t board:fp2 ubuntu.yaml
 
-The carrier determines: kernel suffix, firmware package, carrier-specific overlays, and carrier identity metadata (`carrierinfo`).
+# FP3 — Ubuntu
+sudo debos -t carrier:lime -t board:fp3 ubuntu.yaml
 
-Example:
-```
+# FP2 — Debian
 sudo debos -t carrier:lime -t board:fp2 debian.yaml
+
+# FP3 — RaspAP
+sudo debos -t carrier:lime -t board:fp3 raspap.yaml
 ```
 
-### Board Parameter
+## Flashing
 
-The `board` parameter is required. Omitting it will cause the build to fail.
+After building, create a sparse image before flashing.
 
-Currently supported boards:
-- `fp2`: Fairphone 2
+### Fairphone 2
 
-Example:
-```
-sudo debos -t carrier:lime -t board:fp2 debian.yaml
-```
-
-## Board Directory Structure
-
-The repository uses a per-board directory structure for customization:
-
-```
-carriers/
-└── lime/
-    └── overlays/   # Lime-specific overlay files (carrierinfo)
-boards/
-└── fp2/
-    ├── overlays/   # FP2-specific overlay files (deviceinfo, extlinux.conf, etc.)
-    └── scripts/    # FP2-specific scripts (setup-networking.sh)
+```bash
+img2simg ubuntu-lime-fp2.img sparse-ubuntu-lime-fp2.img
+fastboot flash userdata sparse-ubuntu-lime-fp2.img
 ```
 
-### Adding a New Board
+### Fairphone 3
 
-To add support for a new board, follow this pattern:
+⚠️ **CRITICAL**: Only flash the `userdata` partition. Never flash `system_a` or other partitions.
 
-1. Create `boards/<board>/overlays/` with board-specific files.
-2. Create `boards/<board>/scripts/setup-networking.sh` for board-specific service setup.
-3. Create a `citronics-<carrier>-<board>` meta-package in the [deb-packages](https://github.com/Citronics/deb-packages) repository.
-4. Build with `sudo debos -t carrier:<carrier> -t board:<board> debian.yaml`.
+```bash
+img2simg ubuntu-lime-fp3.img sparse-ubuntu-lime-fp3.img
+fastboot flash userdata sparse-ubuntu-lime-fp3.img
+```
 
-### Adding a New Carrier
+## Directory Structure
 
-To add support for a new carrier, follow this pattern:
+```
+debos-citronics/
+├── ubuntu.yaml              # Generic Ubuntu recipe (FP2 + FP3)
+├── debian.yaml              # Generic Debian recipe (FP2 + FP3)
+├── raspap.yaml              # RaspAP recipe (FP2 + FP3)
+├── carriers/
+│   └── lime/
+│       └── overlays/        # Lime carrier overlays (carrierinfo)
+├── boards/
+│   ├── fp2/
+│   │   ├── overlays/        # FP2-specific overlays (deviceinfo, extlinux.conf)
+│   │   └── scripts/         # FP2 networking setup
+│   └── fp3/
+│       ├── overlays/        # FP3-specific overlays (deviceinfo, extlinux.conf)
+│       └── scripts/         # FP3 networking setup
+├── overlays/                # Common overlays (all boards)
+└── scripts/                 # Common scripts
+```
 
-1. Create `carriers/<carrier>/overlays/usr/share/carrierinfo/carrierinfo` with carrier metadata.
-2. Create carrier-specific kernel and firmware repos (e.g., `<carrier>-image` and `linux-firmware-<carrier>`).
-3. Add carrier meta-packages to the [deb-packages](https://github.com/Citronics/deb-packages) repository.
-4. Build with `sudo debos -t carrier:<carrier> -t board:<board> debian.yaml`.
+## Adding a New Board
 
-## Flashing pre built images
+1. Create `boards/<board>/overlays/usr/share/deviceinfo/deviceinfo`:
+   ```bash
+   deviceinfo_name="My Board"
+   deviceinfo_codename="myboard"
+   deviceinfo_getty="ttyMSM0;115200"
+   deviceinfo_arch="arm64"
+   deviceinfo_modules_initfs="module1 module2"
+   ```
+2. Create `boards/<board>/overlays/boot/extlinux/extlinux.conf` with appropriate kernel params.
+3. Create `boards/<board>/scripts/setup-networking.sh`.
+4. Create meta-package `citronics-<carrier>-<board>` in [deb-packages](https://github.com/Citronics/deb-packages).
+5. Build: `sudo debos -t carrier:lime -t board:<board> ubuntu.yaml`
 
-Go to releases on this github page, select one, download either `sparse-debian-lime-fp2.img`, `sparse-ubuntu-lime-fp2.img`, or `sparse-raspap-lime-fp2.img` and flash it with fastboot as explained above.
+## Adding a New Carrier
 
-## Using Wifi
+1. Create `carriers/<carrier>/overlays/usr/share/carrierinfo/carrierinfo`:
+   ```bash
+   carrierinfo_name="My Carrier"
+   carrierinfo_codename="mycarrier"
+   ```
+2. Create kernel and firmware repos for the new carrier.
+3. Add meta-packages to [deb-packages](https://github.com/Citronics/deb-packages).
+4. Build: `sudo debos -t carrier:<carrier> -t board:<board> ubuntu.yaml`
 
-The networking setup is done with Network Manager's `nmcli` and to have wifi working you will need to ssh to your Lime using the method above and use the follwing:
+## Post-boot setup
 
-1. Make sure you can ssh to your Lime by following the previous section
-2. Use `nmcli --ask dev wifi connect <YOURSSID>`
+### Using WiFi
 
-You should now be connected to your wifi network.
+Networking is managed by Network Manager's `nmcli`.
 
-## Using the modem
+1. Connect to your device via SSH.
+2. Run: `nmcli --ask dev wifi connect <YOURSSID>`
 
-The modem configuration is also done with Network Manager's `nmcli` and to connect to your APN, you can use the following:
+### Using the modem
 
-1. Make sure you can ssh to your Lime by following the previous section
-2. Use `nmcli connection add type gsm ifname '*' con-name gsm apn <YOUR APN>` to create the connection
-3. Then type `nmcli connection up gsm`
+1. Connect to your device via SSH.
+2. Create the connection: `nmcli connection add type gsm ifname '*' con-name gsm apn <YOUR APN>`
+3. Bring the connection up: `nmcli connection up gsm`
 
-And you should be connected to your APN.
+## Resizing the rootfs
 
-## Resizing the rootfs to take all the userdata empty space
-
-During the first boot after flashing, the rootfs will be expanded to take all available space on your Lime's fairphone 2 userdata partition, so there is nothing more to do than wait a couple more seconds during the first boot.
+The rootfs expands automatically to fill the `userdata` partition during the first boot. Wait a few seconds for the process to complete.
