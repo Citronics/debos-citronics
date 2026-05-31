@@ -1,6 +1,6 @@
 {{- $carrier := .carrier -}}
 {{- $board := .board -}}
-{{- $architecture := "armhf" -}}{{- if eq $board "fp3" -}}{{- $architecture = "arm64" -}}{{- end -}}{{- if .architecture -}}{{- $architecture = .architecture -}}{{- end -}}
+{{- $architecture := .architecture -}}
 {{- $image := or .image (printf "debian-%s-%s.img" $carrier $board) -}}
 
 architecture: {{ $architecture }}
@@ -17,7 +17,7 @@ actions:
   - action: run
     description: Enable non-free-firmware Debian repo
     chroot: true
-    command: sed -i 's/^Components: main$/Components: main non-free-firmware/' /etc/apt/sources.list.d/debian.sources
+    command: "sed -i 's/^Components: main$/Components: main non-free-firmware/' /etc/apt/sources.list.d/debian.sources"
 
   - action: apt
     packages: [udev, ca-certificates, coreutils, sudo, openssh-server, adduser, systemd, systemd-sysv, systemd-resolved, nano, vim, qrtr-tools, libqmi-utils, rmtfs, udev, kmod, network-manager, modemmanager, wpasupplicant, ifupdown, isc-dhcp-client, isc-dhcp-server, systemd-timesyncd, bluetooth, kpartx, cloud-utils, fake-hwclock, wireless-regdb, usbutils, iputils-ping]

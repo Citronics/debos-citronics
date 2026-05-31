@@ -1,6 +1,6 @@
 {{- $carrier := .carrier -}}
 {{- $board := .board -}}
-{{- $architecture := "armhf" -}}{{- if eq $board "fp3" -}}{{- $architecture = "arm64" -}}{{- end -}}{{- if .architecture -}}{{- $architecture = .architecture -}}{{- end -}}
+{{- $architecture := .architecture -}}
 {{- $image := or .image (printf "ubuntu-%s-%s.img" $carrier $board) -}}
 
 architecture: {{ $architecture }}
