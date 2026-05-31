@@ -55,7 +55,7 @@ actions:
 
   - action: image-partition
     imagename: {{ $image }}
-    imagesize: 750MB
+    imagesize: 1500MB
     partitiontype: msdos
     mountpoints:
       - mountpoint: /
