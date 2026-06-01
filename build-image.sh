@@ -115,40 +115,13 @@ mount -t sysfs sysfs "$ROOTFS/sys"
 mount --rbind /dev "$ROOTFS/dev"
 mount -t devpts devpts "$ROOTFS/dev/pts"
 
-echo "Installing common local .deb packages"
-if [ -d "/citronics/debos-citronics/local-debs/common" ]; then
-  COMMON_DEBS=$(find /citronics/debos-citronics/local-debs/common -maxdepth 1 -name "*.deb" 2>/dev/null)
-  if [ -n "$COMMON_DEBS" ]; then
-    mkdir -p "$ROOTFS/tmp/local-debs"
-    cp /citronics/debos-citronics/local-debs/common/*.deb "$ROOTFS/tmp/local-debs/"
-  fi
-fi
+echo "=== Adding Citronics APT repository ==="
+mkdir -p "$ROOTFS/etc/apt/sources.list.d"
+echo "deb [trusted=yes] https://citronics.github.io/deb-packages stable main" \
+  > "$ROOTFS/etc/apt/sources.list.d/citronics.list"
 
-echo "Installing $PHONE-specific local .deb packages"
-if [ -d "/citronics/debos-citronics/local-debs/$PHONE" ]; then
-  PHONE_DEBS=$(find /citronics/debos-citronics/local-debs/$PHONE -maxdepth 1 -name "*.deb" 2>/dev/null)
-  if [ -n "$PHONE_DEBS" ]; then
-    mkdir -p "$ROOTFS/tmp/local-debs"
-    cp /citronics/debos-citronics/local-debs/$PHONE/*.deb "$ROOTFS/tmp/local-debs/"
-  fi
-fi
-
-if [ -d "$ROOTFS/tmp/local-debs" ]; then
-  chroot "$ROOTFS" bash -c "dpkg -i --force-depends /tmp/local-debs/*.deb" || echo "WARNING: Some packages failed to install"
-  rm -rf "$ROOTFS/tmp/local-debs"
-fi
-
-echo "=== Checking hooks after deb install ==="
-ls "$ROOTFS/etc/initramfs-tools/hooks/" && echo "Hooks OK" || echo "Hooks dir EMPTY or MISSING"
-ls "$ROOTFS/usr/share/citronics-initramfs/" 2>/dev/null && echo "citronics-initramfs share OK" || echo "citronics-initramfs share MISSING"
-
-echo "=== Ensuring citronics-initramfs files are present ==="
-if [ ! -f "$ROOTFS/etc/initramfs-tools/hooks/01-copy-custom-init" ]; then
-  echo "WARNING: Hooks missing - extracting directly from deb"
-  dpkg-deb -x /citronics/debos-citronics/local-debs/common/citronics-initramfs_1.0.9_all.deb "$ROOTFS/"
-  echo "Direct extraction complete, hooks now:"
-  ls "$ROOTFS/etc/initramfs-tools/hooks/"
-fi
+echo "=== Installing citronics-lime-$PHONE meta-package ==="
+chroot "$ROOTFS" bash -c "apt-get update -qq && apt-get install -y citronics-lime-$PHONE"
 
 echo "=== Applying overlays ==="
 if [ -d "/citronics/debos-citronics/overlays" ]; then
@@ -203,34 +176,9 @@ if [ -n "$KVER_CHECK" ]; then
 fi
 
 echo "=== Setting up boot partition ==="
-KVER=$(ls "$ROOTFS/boot/vmlinuz-"* 2>/dev/null | head -1 | sed "s|.*/vmlinuz-||" || true)
-if [ -n "$KVER" ]; then
-  echo "Kernel version: $KVER"
-  cp "$ROOTFS/boot/vmlinuz-$KVER" "$ROOTFS/boot/Image.gz"
-  DTB_DIR="$ROOTFS/usr/lib/linux-image-$KVER"
-  if [ -d "$DTB_DIR" ]; then
-    if [ "$BOARD" = "fp3" ]; then
-      echo "Copying FP3 DTBs to /boot"
-      cp "$DTB_DIR/qcom/sdm632-fairphone-fp3.dtb" "$ROOTFS/boot/" 2>/dev/null || true
-      cp "$DTB_DIR/qcom/sdm632-fairphone-fp3p.dtb" "$ROOTFS/boot/" 2>/dev/null || true
-    elif [ "$BOARD" = "fp2" ]; then
-      echo "Copying FP2 DTBs to /boot"
-      find "$DTB_DIR" -name "*fairphone*fp2*.dtb" -exec cp {} "$ROOTFS/boot/" \; 2>/dev/null || true
-      find "$DTB_DIR" -name "*msm8974*fairphone*.dtb" -exec cp {} "$ROOTFS/boot/" \; 2>/dev/null || true
-    else
-      echo "Copying all DTBs for board $BOARD"
-      find "$DTB_DIR" -name "*.dtb" -exec cp {} "$ROOTFS/boot/" \; 2>/dev/null || true
-    fi
-  fi
-  if [ -f "$ROOTFS/boot/initrd.img-$KVER" ]; then
-    mv "$ROOTFS/boot/initrd.img-$KVER" "$ROOTFS/boot/initramfs.gz"
-    echo "Renamed initrd.img-$KVER to initramfs.gz"
-  fi
-  echo "Removing kernel-package files from /boot to keep boot partition lean"
-  rm -f "$ROOTFS/boot/vmlinuz-$KVER"
-  rm -f "$ROOTFS/boot/System.map-$KVER"
-  rm -f "$ROOTFS/boot/config-$KVER"
-fi
+cp /citronics/debos-citronics/scripts/setup-boot.sh "$ROOTFS/tmp/setup-boot.sh"
+chroot "$ROOTFS" bash /tmp/setup-boot.sh
+rm "$ROOTFS/tmp/setup-boot.sh"
 
 echo "=== Creating disk image ==="
 fallocate -l 2G "$IMG"
