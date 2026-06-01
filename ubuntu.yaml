@@ -26,7 +26,7 @@ actions:
   - action: run
     description: Add citronics APT repository
     chroot: true
-    command: printf 'Types: deb\nURIs: https://citronics.github.io/deb-packages\nSuites: stable\nComponents: main\nTrusted: yes\n' > /etc/apt/sources.list.d/citronics.sources
+    script: scripts/add-citronics-repo.sh
 
   - action: apt
     packages: [initramfs-tools, citronics-{{ $carrier }}-{{ $board }}]
