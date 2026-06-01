@@ -59,6 +59,10 @@ actions:
     chroot: true
     command: update-initramfs -c -k all
 
+  - action: run
+    chroot: true
+    script: scripts/setup-boot.sh
+
   - action: image-partition
     imagename: {{ $image }}
     imagesize: 1500MB
