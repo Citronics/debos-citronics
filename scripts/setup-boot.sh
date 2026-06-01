@@ -41,3 +41,8 @@ if [ -f "/boot/initrd.img-$KVER" ]; then
   mv "/boot/initrd.img-$KVER" /boot/initramfs.gz
   echo "Renamed initrd.img-$KVER to /boot/initramfs.gz"
 fi
+
+echo "Removing kernel-package files from /boot to keep boot partition lean"
+rm -f "/boot/vmlinuz-$KVER"
+rm -f "/boot/System.map-$KVER"
+rm -f "/boot/config-$KVER"
