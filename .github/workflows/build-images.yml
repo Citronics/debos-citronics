@@ -11,9 +11,6 @@ on:
 permissions:
   contents: write
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
 jobs:
   build:
     name: Build ${{ matrix.os }}-lime-${{ matrix.board }}
@@ -30,7 +27,7 @@ jobs:
             architecture: arm64
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Install dependencies
         run: |
@@ -50,7 +47,7 @@ jobs:
           sudo xz -T0 -9 ${{ matrix.os }}-lime-${{ matrix.board }}.img
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ matrix.os }}-lime-${{ matrix.board }}
           path: ${{ matrix.os }}-lime-${{ matrix.board }}.img.xz
@@ -61,10 +58,10 @@ jobs:
     needs: build
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Download all artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           path: artifacts
 
