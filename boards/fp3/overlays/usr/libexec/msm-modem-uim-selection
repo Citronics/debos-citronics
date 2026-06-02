@@ -25,14 +25,15 @@ fi
 # The modem may appear after some delay, wait for it.
 count=0
 while [ -z "$QMICLI_MODEM" ] && [ "$count" -lt "45" ]; do
-	# Prefer legacy rpmsg-exported QMI device
 	if [ -e "/dev/modem" ]; then
 		QMICLI_MODEM="qmicli --silent -d /dev/modem"
 		echo "Using /dev/modem"
 	elif [ -e "/dev/wwan0qmi0" ]; then
-		# Use --device-open-qmi for explicit QMI mode
-		QMICLI_MODEM="qmicli --silent -d /dev/wwan0qmi0 --device-open-qmi"
+		QMICLI_MODEM="qmicli --silent -d /dev/wwan0qmi0 --device-open-proxy"
 		echo "Using /dev/wwan0qmi0"
+	elif qmicli --silent -pd qrtr://0 --uim-noop > /dev/null 2>&1; then
+		QMICLI_MODEM="qmicli --silent -pd qrtr://0"
+		echo "Using qrtr://0"
 	fi
 
 	sleep 1
