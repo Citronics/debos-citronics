@@ -1,11 +1,20 @@
 #!/bin/bash
 
 SERIAL=$(awk '/^Serial/ {print $3}' /proc/cpuinfo)
-SUFFIX=${SERIAL: -6}
+if [ -z "$SERIAL" ] && [ -f /proc/device-tree/serial-number ]; then
+  SERIAL=$(tr -d '\0' < /proc/device-tree/serial-number)
+fi
+
+if [ -z "$SERIAL" ]; then
+  echo "No serial number found, cannot set MAC addresses"
+  exit 1
+fi
+
+HASH=$(printf '%s' "$SERIAL" | md5sum | cut -c1-6)
 BASE_MAC="02:11:22"
-X1=${SUFFIX:0:2}
-X2=${SUFFIX:2:2}
-X3=${SUFFIX:4:2}
+X1=${HASH:0:2}
+X2=${HASH:2:2}
+X3=${HASH:4:2}
 
 MAC_USB0="${BASE_MAC}:${X1}:${X2}:${X3}"
 MAC_ETH0="${BASE_MAC}:$(printf "%02x" $((0x$X1 ^ 0x01))):$X2:$X3"
@@ -31,4 +40,4 @@ wait_and_set_mac() {
 }
 
 wait_and_set_mac usb0 "$MAC_USB0"
-wait_and_set_mac eth0 "$MAC_ETH0"
+wait_and_set_mac eth0 "$MAC_ETH0" || echo "eth0 not present, skipping"
