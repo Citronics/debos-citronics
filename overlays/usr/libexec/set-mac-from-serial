@@ -36,6 +36,7 @@ wait_and_set_mac() {
 
   ip link set "$iface" down
   ip link set "$iface" address "$mac"
+  ip link set "$iface" up
   echo "Set MAC $mac for $iface"
 }
 

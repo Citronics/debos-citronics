@@ -1,7 +1,7 @@
 [Unit]
 Description=Set MAC address for usb0 and eth0 from Serial
 After=network-pre.target
-Before=NetworkManager.service
+Before=NetworkManager.service networking.service
 DefaultDependencies=no
 Wants=network-pre.target
 
