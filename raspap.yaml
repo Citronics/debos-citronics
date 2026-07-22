@@ -106,7 +106,7 @@ actions:
 
   - action: image-partition
     imagename: {{ $image }}
-    imagesize: 1500MB
+    imagesize: 1628MB
     partitiontype: msdos
     mountpoints:
       - mountpoint: /
@@ -117,7 +117,7 @@ actions:
       - name: boot
         fs: ext2
         start: 0%
-        end: 50MB
+        end: 128MB
         flags: [ boot ]
       - name: root
         fs: ext4
