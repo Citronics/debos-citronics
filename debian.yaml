@@ -79,7 +79,7 @@ actions:
         flags: [ boot ]
       - name: root
         fs: ext4
-        start: 50MB
+        start: 128MB
         end: 100%
 
   - action: filesystem-deploy
