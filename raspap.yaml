@@ -65,6 +65,11 @@ actions:
     source: boards/{{ $board }}/overlays
     destination: /
 
+  - action: run
+    description: Carrier-specific setup
+    chroot: true
+    script: carriers/{{ $carrier }}/scripts/setup-carrier.sh
+
   - action: overlay
     description: Apply RaspAP-specific overlays (override conflicting base configs)
     source: raspap-overlays/system

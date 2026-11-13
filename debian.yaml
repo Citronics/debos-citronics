@@ -46,6 +46,11 @@ actions:
     destination: /
 
   - action: run
+    description: Carrier-specific setup
+    chroot: true
+    script: carriers/{{ $carrier }}/scripts/setup-carrier.sh
+
+  - action: run
     chroot: true
     script: boards/{{ $board }}/scripts/setup-networking.sh
 

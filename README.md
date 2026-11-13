@@ -103,7 +103,8 @@ debos-citronics/
 ├── raspap.yaml              # RaspAP recipe (FP2 + FP3)
 ├── carriers/
 │   └── lime/
-│       └── overlays/        # Lime carrier overlays (carrierinfo)
+│       ├── overlays/        # Lime carrier overlays (carrierinfo, STM32 tools, HA agent)
+│       └── scripts/         # Lime carrier setup (packages, services)
 ├── boards/
 │   ├── fp2/
 │   │   ├── overlays/        # FP2-specific overlays (deviceinfo, extlinux.conf)
@@ -137,9 +138,10 @@ debos-citronics/
    carrierinfo_name="My Carrier"
    carrierinfo_codename="mycarrier"
    ```
-2. Create kernel and firmware repos for the new carrier.
-3. Add meta-packages to [deb-packages](https://github.com/Citronics/deb-packages).
-4. Build: `sudo debos -t carrier:<carrier> -t board:<board> ubuntu.yaml`
+2. Create `carriers/<carrier>/scripts/setup-carrier.sh`, run in the image after the overlays (it may do nothing).
+3. Create kernel and firmware repos for the new carrier.
+4. Add meta-packages to [deb-packages](https://github.com/Citronics/deb-packages).
+5. Build: `sudo debos -t carrier:<carrier> -t board:<board> ubuntu.yaml`
 
 ## Post-boot setup
 
@@ -155,6 +157,16 @@ Networking is managed by Network Manager's `nmcli`.
 1. Connect to your device via SSH.
 2. Create the connection: `nmcli connection add type gsm ifname '*' con-name gsm apn <YOUR APN>`
 3. Bring the connection up: `nmcli connection up gsm`
+
+### Lime: the STM32 and Home Assistant
+
+The Lime's STM32F401 runs CircuitPython. It drives the RGB LED, reads the user button and the header pins, and can press the phone's keys. `limeboard-mcu` talks to it:
+
+- `limeboard-mcu info`, `limeboard-mcu exec '<python>'`, `limeboard-mcu repl`
+- `limeboard-mcu deploy` installs the bridge (`/usr/share/limeboard-mcu/code.py`) that the Home Assistant agent uses.
+- `limeboard-mcu backup <file.bin>` and `limeboard-mcu flash <file.bin>` read and write its whole flash over USB DFU, with no jumper needed.
+
+`limeboard-ha` makes the board a Home Assistant device through MQTT discovery. It covers the phone's sensors, a reboot button and, once the bridge is deployed, the STM32's LED, button, keys and header pins. To enable it, set `MQTT_HOST` (and `MQTT_USER`/`MQTT_PASSWORD` if your broker needs them) in `/etc/limeboard-ha.conf`, then run `systemctl restart limeboard-ha`. The board appears under Settings > Devices > MQTT.
 
 ## Resizing the rootfs
 
