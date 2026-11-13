@@ -166,7 +166,7 @@ The Lime's STM32F401 runs CircuitPython. It drives the RGB LED, reads the user b
 - `limeboard-mcu deploy` installs the bridge (`/usr/share/limeboard-mcu/code.py`) that the Home Assistant agent uses.
 - `limeboard-mcu backup <file.bin>` and `limeboard-mcu flash <file.bin>` read and write its whole flash over USB DFU, with no jumper needed.
 
-`limeboard-ha` makes the board a Home Assistant device through MQTT discovery. It covers the phone's sensors, a reboot button and, once the bridge is deployed, the STM32's LED, button, keys and header pins. To enable it, set `MQTT_HOST` (and `MQTT_USER`/`MQTT_PASSWORD` if your broker needs them) in `/etc/limeboard-ha.conf`, then run `systemctl restart limeboard-ha`. The board appears under Settings > Devices > MQTT.
+`limeboard-ha` makes the board a Home Assistant device through MQTT discovery. It covers the phone's system sensors, its accelerometer (with a tilt angle), gyroscope, magnetometer, and light and proximity sensors when present, a reboot button and, once the bridge is deployed, the STM32's RGB LED (8 colours), button, keys and header pins. To enable it, set `MQTT_HOST` (and `MQTT_USER`/`MQTT_PASSWORD` if your broker needs them) in `/etc/limeboard-ha.conf`, then run `systemctl restart limeboard-ha`. The board appears under Settings > Devices > MQTT.
 
 ## Resizing the rootfs
 
