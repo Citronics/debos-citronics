@@ -8,6 +8,9 @@ set -euo pipefail
 export DEBIAN_FRONTEND=noninteractive
 apt-get install -y --no-install-recommends mosquitto-clients dfu-util picocom iproute2
 
+# It holds the MQTT password
+chmod 600 /etc/limeboard-ha.conf
+
 # Idle until a broker is set in /etc/limeboard-ha.conf
 systemctl enable limeboard-ha.service
 
