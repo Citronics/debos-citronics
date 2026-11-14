@@ -158,15 +158,19 @@ Networking is managed by Network Manager's `nmcli`.
 2. Create the connection: `nmcli connection add type gsm ifname '*' con-name gsm apn <YOUR APN>`
 3. Bring the connection up: `nmcli connection up gsm`
 
-### Lime: the STM32 and Home Assistant
+### Lime: Home Assistant
 
-The Lime's STM32F401 runs CircuitPython. It drives the RGB LED, reads the user button and the header pins, and can press the phone's keys. `limeboard-mcu` talks to it:
+`limeboard-ha` (one Python script, paho-mqtt) makes the board a Home Assistant device through MQTT discovery: the phone's system sensors, its accelerometer (with a tilt angle), gyroscope, magnetometer, and light and proximity sensors when present (every second), a reboot button, and the STM32's RGB LED, button and the phone's volume and camera keys.
 
-- `limeboard-mcu info`, `limeboard-mcu exec '<python>'`, `limeboard-mcu repl`
-- `limeboard-mcu deploy` installs the bridge (`/usr/share/limeboard-mcu/code.py`) that the Home Assistant agent uses.
-- `limeboard-mcu backup <file.bin>` and `limeboard-mcu flash <file.bin>` read and write its whole flash over USB DFU, with no jumper needed.
+1. In Home Assistant: install the Mosquitto broker add-on, add the MQTT integration, and create a user for the board (`homeassistant` is reserved by the add-on).
+2. On the board: set `MQTT_HOST`, `MQTT_USER` and `MQTT_PASSWORD` in `/etc/limeboard-ha.conf`, then `systemctl restart limeboard-ha`.
+3. For the STM32 entities, copy the bridge to the STM32's CircuitPython drive: `sudo mount /dev/disk/by-label/CIRCUITPY /mnt && sudo cp /usr/share/limeboard-ha/code.py /mnt/ && sudo umount /mnt`.
 
-`limeboard-ha` makes the board a Home Assistant device through MQTT discovery. It covers the phone's system sensors, its accelerometer (with a tilt angle), gyroscope, magnetometer, and light and proximity sensors when present (streamed every second), a reboot button and, once the bridge is deployed, the STM32's RGB LED (8 colours), button, keys and header pins. To enable it, set `MQTT_HOST` (and `MQTT_USER`/`MQTT_PASSWORD` if your broker needs them) in `/etc/limeboard-ha.conf`, then run `systemctl restart limeboard-ha`. The board appears under Settings > Devices > MQTT.
+The board appears under Settings > Devices & services > MQTT.
+
+### Lime: the STM32
+
+The STM32F401 runs CircuitPython; its REPL is on `/dev/ttyACM0` (stop `limeboard-ha` first, it uses the same port). To back up or reflash it, reboot it into its ROM bootloader from the REPL (`import microcontroller; microcontroller.on_next_reset(microcontroller.RunMode.BOOTLOADER); microcontroller.reset()`), then read or write its whole flash with `dfu-util -d 0483:df11 -a 0 -s 0x08000000:524288:leave -U backup.bin` or `dfu-util -d 0483:df11 -a 0 -s 0x08000000:leave -D backup.bin`. No jumper is needed.
 
 ## Resizing the rootfs
 
