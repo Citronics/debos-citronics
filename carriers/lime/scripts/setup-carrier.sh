@@ -1,11 +1,12 @@
 #!/bin/bash
-# Lime carrier: the Home Assistant MQTT agent (limeboard-ha) and dfu-util for
-# the board's STM32. The agent is installed by the carrier overlay; it is
-# the same file as the buildroot-fp2 limeboard-ha package.
+# Lime carrier: the udev rule binding the kernel's dln2 driver to the STM32's
+# Limeboard I/O firmware, dfu-util to update it, and the Home Assistant MQTT
+# agent (limeboard-ha). The overlay installs them; they are the same files as
+# the buildroot-fp2 limeboard-io and limeboard-ha packages.
 set -euo pipefail
 
 export DEBIAN_FRONTEND=noninteractive
-apt-get install -y --no-install-recommends python3-paho-mqtt python3-serial dfu-util
+apt-get install -y --no-install-recommends python3-paho-mqtt dfu-util
 
 # It holds the MQTT password
 chmod 600 /etc/limeboard-ha.conf
