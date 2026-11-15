@@ -1,6 +1,7 @@
 #!/bin/bash
-# Lime carrier: the udev rule binding the kernel's dln2 driver to the STM32's
-# Limeboard I/O firmware, dfu-util to update it, gpiozero with the "limeboard"
+# Lime carrier: for the STM32's Limeboard I/O firmware, which the kernel's
+# citronics-dln2 driver runs, the udev rule naming its UART /dev/serial0,
+# dfu-util to update it, gpiozero with the "limeboard"
 # pin factory, RPi.GPIO and Adafruit Blinka support (limeboard_compat), and
 # the Home Assistant MQTT agent (limeboard-ha). The overlay
 # installs them; they are the same files as the buildroot-fp2 limeboard-io and
