@@ -8,7 +8,7 @@
 set -euo pipefail
 
 export DEBIAN_FRONTEND=noninteractive
-apt-get install -y --no-install-recommends python3-paho-mqtt python3-psutil dfu-util
+apt-get install -y --no-install-recommends python3-paho-mqtt python3-psutil python3-spidev dfu-util
 
 # lgpio, the backend of gpiozero's lgpio pin factory. Built from source:
 # Debian does not package it, and its alert thread is patched to wake every
