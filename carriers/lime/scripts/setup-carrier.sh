@@ -1,7 +1,8 @@
 #!/bin/bash
 # Lime carrier: the udev rule binding the kernel's dln2 driver to the STM32's
 # Limeboard I/O firmware, dfu-util to update it, gpiozero with the "limeboard"
-# pin factory, and the Home Assistant MQTT agent (limeboard-ha). The overlay
+# pin factory, RPi.GPIO and Adafruit Blinka support (limeboard_compat), and
+# the Home Assistant MQTT agent (limeboard-ha). The overlay
 # installs them; they are the same files as the buildroot-fp2 limeboard-io and
 # limeboard-ha packages.
 set -euo pipefail
@@ -35,10 +36,12 @@ grep -q '{0, 1e7}' "$src/src/lgPthAlerts.c"
 (cd "$src" && PYPI=1 CFLAGS="-std=gnu17" pip3 install --no-deps --no-build-isolation \
 	--break-system-packages .)
 # gpiozero 2.0.1, the first with the lgpio pin factory (Debian has 1.6.2),
-# the same version as in Buildroot
+# and rpi-lgpio (RPi.GPIO on lgpio), the same versions as in Buildroot. The
+# overlay's limeboard_compat.pth points them at the Limeboard's GPIO chip.
 cat > "$work/requirements.txt" <<'REQ'
 gpiozero==2.0.1 --hash=sha256:8f621de357171d574c0b7ea0e358cb66e560818a47b0eeedf41ce1cdbd20c70b
 colorzero==2.0 --hash=sha256:0e60d743a6b8071498a56465f7719c96a5e92928f858bab1be2a0d606c9aa0f8
+rpi-lgpio==0.6 --hash=sha256:0930b6e0ffbfbeee9366fbfa5038d29a7606be96a5229d570b1f81be8f776777
 REQ
 pip3 install --no-deps --require-hashes --break-system-packages -r "$work/requirements.txt"
 rm -rf "$work"
