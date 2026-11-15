@@ -162,16 +162,18 @@ Networking is managed by Network Manager's `nmcli`.
 
 With the Limeboard I/O firmware on its STM32, the Lime's Raspberry Pi style header shows up as standard Linux devices through the kernel's `dln2` drivers, with the Pi's BCM numbering: GPIO chip `dln2` (lines 0-27 = GPIO0-27, 28-31 = RGB LED and user button), an I2C bus on GPIO2/3, SPI0 on GPIO7-11, an 8-channel IIO ADC, and the UART (GPIO14/15) as `/dev/ttyACM*`. Use the usual tools: libgpiod or `/sys/class/gpio`, `i2cdetect -y -r <bus>`, `spidev`, the IIO files. A udev rule (`90-limeboard-io.rules`) binds the driver to the firmware's USB ID.
 
+Raspberry Pi gpiozero code runs unchanged with `GPIOZERO_PIN_FACTORY=limeboard`: the `limeboard` pin factory is gpiozero's lgpio factory on the `dln2` chip, and names the onboard LED and button `LED_R`, `LED_G`, `LED_B` and `BUTTON`. Use `LED` and `RGBLED(..., pwm=False)`: the firmware has no PWM.
+
 To update the firmware: `dfu-util -e` reboots the STM32 into its ROM bootloader (also reached by holding the user button at power-on), then `dfu-util -d 0483:df11 -a 0 -s 0x08000000:leave -D limeboard-io.bin`. Back up the whole flash first with `dfu-util -d 0483:df11 -a 0 -s 0x08000000:524288:leave -U backup.bin`.
 
 ### Lime: Home Assistant
 
-`limeboard-ha` (one Python script, paho-mqtt) makes the board a Home Assistant device through MQTT discovery: the phone's system sensors, its accelerometer (with a tilt angle), gyroscope, magnetometer, and light and proximity sensors when present (every second), a reboot button, and the board's RGB LED (8 colours) and user button.
+`limeboard-ha` (one Python script on paho-mqtt, psutil and gpiozero) makes the board a Home Assistant device through MQTT discovery: the phone's system sensors, its accelerometer (with a tilt angle), gyroscope, magnetometer, and light and proximity sensors when present (every second), a reboot button, and the board's RGB LED (8 colours) and user button.
 
 1. In Home Assistant: install the Mosquitto broker add-on, add the MQTT integration, and create a user for the board (`homeassistant` is reserved by the add-on).
 2. On the board: set `MQTT_HOST`, `MQTT_USER` and `MQTT_PASSWORD` in `/etc/limeboard-ha.conf`, then `systemctl restart limeboard-ha`.
 
-The board appears under Settings > Devices & services > MQTT.
+The board appears under Settings > Devices & services > MQTT. Entities, MQTT topics and design: `/usr/share/doc/limeboard-ha/README.md`.
 
 ## Resizing the rootfs
 
