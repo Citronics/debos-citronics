@@ -14,7 +14,7 @@ permissions:
 jobs:
   build:
     name: Build ${{ matrix.os }}-lime-${{ matrix.board }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     strategy:
       fail-fast: false
       matrix:
@@ -32,7 +32,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y debos qemu-user-static
+          sudo apt-get install -y debos qemu-user qemu-user-binfmt
 
       - name: Build image
         run: |
@@ -56,7 +56,7 @@ jobs:
 
   release:
     name: Publish Release
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     needs: build
 
     steps:

@@ -63,7 +63,9 @@ OUTPUT_IMG_BASENAME="'"$(basename "$OUTPUT_IMG")"'"
 DOCKER_OUTPUT_IMG="/citronics/debos-citronics/$OUTPUT_IMG_BASENAME"
 
 apt-get update -qq
-apt-get install -y mmdebstrap qemu-user-static rsync fdisk util-linux e2fsprogs kpartx
+apt-get install -y mmdebstrap rsync fdisk util-linux e2fsprogs kpartx
+# Ubuntu 26.04 and later ship the static emulators in qemu-user
+apt-get install -y qemu-user-static || apt-get install -y qemu-user qemu-user-binfmt
 
 IMG="/tmp/disk.img"
 ROOTFS="/tmp/rootfs"
