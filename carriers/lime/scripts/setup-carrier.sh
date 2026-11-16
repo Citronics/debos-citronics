@@ -10,8 +10,12 @@ set -euo pipefail
 export DEBIAN_FRONTEND=noninteractive
 apt-get install -y --no-install-recommends python3-rpi-lgpio can-utils iproute2
 
-for user in $(getent group sudo | cut -d: -f4 | tr , ' '); do
-	usermod -aG gpio,spi,i2c,dialout "$user"
-done
+# The groups come from limeboard-io, which only boards with Limeboard
+# support (citronics-lime-fp2) install.
+if dpkg-query -W -f='${Status}' limeboard-io 2>/dev/null | grep -q "ok installed"; then
+	for user in $(getent group sudo | cut -d: -f4 | tr , ' '); do
+		usermod -aG gpio,spi,i2c,dialout "$user"
+	done
+fi
 
 echo "Lime carrier setup done"
