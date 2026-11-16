@@ -67,6 +67,16 @@ actions:
     chroot: true
     script: scripts/verify-boot.sh
 
+  - action: run
+    description: License manifest of the image
+    chroot: true
+    script: scripts/license-manifest.sh
+
+  - action: run
+    description: License manifest next to the image
+    chroot: false
+    command: cp ${ROOTDIR}/usr/share/doc/citronics-image/licenses.txt ${ARTIFACTDIR}/{{ $image }}.licenses.txt
+
   - action: image-partition
     imagename: {{ $image }}
     imagesize: 1664MB

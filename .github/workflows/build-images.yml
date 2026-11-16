@@ -50,7 +50,9 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: ${{ matrix.os }}-lime-${{ matrix.board }}
-          path: ${{ matrix.os }}-lime-${{ matrix.board }}.img.xz
+          path: |
+            ${{ matrix.os }}-lime-${{ matrix.board }}.img.xz
+            ${{ matrix.os }}-lime-${{ matrix.board }}.img.licenses.txt
 
   release:
     name: Publish Release
@@ -100,4 +102,5 @@ jobs:
           gh release create "${TAG}" \
             ${PRERELEASE_FLAG} \
             --title "${TAG}" \
-            artifacts/**/*.img.xz
+            artifacts/**/*.img.xz \
+            artifacts/**/*.img.licenses.txt
