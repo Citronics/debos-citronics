@@ -95,6 +95,9 @@ actions:
     partitions:
       - name: boot
         fs: ext2
+        # The initramfs mounts /boot from a device-mapper partition that udev
+        # never marks ready: a boot-time fsck would wait 90 s for it, then fail.
+        fsck: false
         start: 0%
         end: 128MB
         flags: [ boot ]
