@@ -218,7 +218,7 @@ ROOT_UUID=$(blkid -s UUID -o value "$P2")
 
 cat > "$ROOT_MNT/etc/fstab" << EOF
 UUID=$ROOT_UUID / ext4 defaults 0 1
-UUID=$BOOT_UUID /boot ext2 defaults 0 2
+UUID=$BOOT_UUID /boot ext2 defaults 0 0
 EOF
 
 echo "=== Verifying boot partition ==="
