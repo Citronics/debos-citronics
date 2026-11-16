@@ -1,0 +1,5 @@
+# The Limeboard header for the users of the gpio and spi groups, as on a
+# Raspberry Pi: its GPIO chip and SPI devices only, not the phone's own.
+# I2C devices are in the i2c group already (i2c-tools).
+SUBSYSTEM=="gpio", KERNEL=="gpiochip*", DRIVERS=="citronics-dln2-gpio", GROUP="gpio", MODE="0660"
+SUBSYSTEM=="spidev", KERNEL=="spidev*", DRIVERS=="citronics-dln2-spi", GROUP="spi", MODE="0660"

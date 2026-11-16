@@ -49,6 +49,16 @@ pip3 install --no-deps --require-hashes --break-system-packages -r "$work/requir
 rm -rf "$work"
 apt-get purge -y --auto-remove $BUILD_DEPS
 
+# The header for the image's users without sudo, as on a Raspberry Pi: the
+# gpio and spi groups own the Limeboard's GPIO chip and SPI devices
+# (91-limeboard-groups.rules), i2c its I2C buses, dialout /dev/serial0.
+groupadd -f -r gpio
+groupadd -f -r spi
+groupadd -f -r i2c
+for user in $(getent group sudo | cut -d: -f4 | tr , ' '); do
+	usermod -aG gpio,spi,i2c,dialout "$user"
+done
+
 # It holds the MQTT password
 chmod 600 /etc/limeboard-ha.conf
 
