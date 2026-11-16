@@ -103,7 +103,7 @@ debos-citronics/
 ├── raspap.yaml              # RaspAP recipe (FP2 + FP3)
 ├── carriers/
 │   └── lime/
-│       ├── overlays/        # Lime carrier overlays (carrierinfo, STM32 tools, HA agent)
+│       ├── overlays/        # Lime carrier overlays (carrierinfo)
 │       └── scripts/         # Lime carrier setup (packages, services)
 ├── boards/
 │   ├── fp2/
@@ -160,13 +160,13 @@ Networking is managed by Network Manager's `nmcli`.
 
 ### Lime: the header (GPIO, I2C, SPI, ADC, UART)
 
-With the Limeboard I/O firmware on its STM32, the Lime's Raspberry Pi style header shows up as standard Linux devices through the kernel's `citronics-dln2` driver, with the Pi's BCM numbering: GPIO chip `citronics-dln2` (lines 0-27 = GPIO0-27, 28-31 = RGB LED and user button), I2C buses on GPIO2/3 and GPIO0/1, SPI0 on GPIO7-11 and SPI1 on GPIO16-21, an 8-channel IIO ADC, and the UART (GPIO14/15) as `/dev/serial0`. Use the usual tools: libgpiod or `/sys/class/gpio`, `i2cdetect -y -r <bus>`, `spidev`, the IIO files. The driver binds to the firmware's USB ID by itself; it needs a kernel built with `CONFIG_CITRONICS_DLN2`.
+With the Limeboard I/O firmware on its STM32, the Lime's Raspberry Pi style header shows up as standard Linux devices through the kernel's `citronics-dln2` driver, with the Pi's BCM numbering: GPIO chip `citronics-dln2` (lines 0-27 = GPIO0-27, 28-31 = RGB LED and user button), I2C buses on GPIO2/3 and GPIO0/1, SPI0 on GPIO7-11 and SPI1 on GPIO16-21, an 8-channel IIO ADC, and the UART (GPIO14/15) as `/dev/serial0`. Use the usual tools: libgpiod or `/sys/class/gpio`, `i2cdetect -y -r <bus>`, `spidev`, the IIO files. The driver binds to the firmware's USB ID by itself; it needs a kernel built with `CONFIG_CITRONICS_DLN2`. The tools come from the `limeboard-io` and `limeboard-ha` packages ([limeboard-extras](https://github.com/Citronics/limeboard-extras)), which `citronics-lime-fp2` installs and apt keeps up to date; the image's user is in the `gpio`, `spi`, `i2c` and `dialout` groups, so the header works without sudo.
 
 As on a Raspberry Pi, the I2C and SPI buses are off until `/etc/limeboard/config.txt` turns them on, with the same lines (`dtparam=i2c_arm=on`, `dtparam=spi=on`, `dtoverlay=spi1-3cs`, `dtoverlay=i2c0`); `sudo limeboard-config enable i2c1` adds a line and applies it at once.
 
 Raspberry Pi gpiozero code runs unchanged with `GPIOZERO_PIN_FACTORY=limeboard`: the `limeboard` pin factory is gpiozero's lgpio factory on the `citronics-dln2` chip, and names the onboard LED and button `LED_R`, `LED_G`, `LED_B` and `BUTTON`. Use `LED` and `RGBLED(..., pwm=False)`: the firmware has no PWM. RPi.GPIO (rpi-lgpio) and Adafruit Blinka work as well: at Python startup, `limeboard_compat` selects the `limeboard` factory, points RPi.GPIO at the `citronics-dln2` chip and gives Blinka the Limeboard's `board` module (Blinka itself is installed with pip). `LIMEBOARD_COMPAT=0` turns it off.
 
-To update the firmware to the version the image carries: `sudo limeboard-config firmware update`. `limeboard-config` is also the Limeboard's `raspi-config`: it turns the buses and a login console on `/dev/serial0` on and off, and a `raspi-config` command answers HAT installers' `raspi-config nonint` calls through it.
+The STM32 firmware updates itself when the packaged one is newer. `sudo limeboard-config firmware install` replaces the CircuitPython the board ships with by it, or flashes a custom `.bin` (`firmware install FILE`), saving the previous firmware and the board's files in `/var/backups/limeboard`. `limeboard-config` is also the Limeboard's `raspi-config`: it turns the buses and a login console on `/dev/serial0` on and off, and a `raspi-config` command answers HAT installers' `raspi-config nonint` calls through it.
 
 By hand: `dfu-util -e` reboots the STM32 into its ROM bootloader (also reached by holding the user button at power-on), then `dfu-util -d 0483:df11 -a 0 -s 0x08000000:leave -D limeboard-io.bin`. Back up the whole flash first with `dfu-util -d 0483:df11 -a 0 -s 0x08000000:524288:leave -U backup.bin`.
 
