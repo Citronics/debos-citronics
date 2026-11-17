@@ -35,6 +35,12 @@ for f in Chart.js Chart.min.js Chart.bundle.js Chart.bundle.min.js; do
 done
 rm -rf ${CHARTJS_TGZ} /tmp/package
 
+# The dashboard counts wired clients on eth*/en* only; the computer on the
+# phone's USB link (usb0) is one too. Fail if upstream changes the match.
+DASHBOARD=${WEBROOT}/src/RaspAP/UI/Dashboard.php
+grep -q 'dev (eth\[0-9\]+|en\\w+) lladdr' ${DASHBOARD}
+sed -i 's/dev (eth\[0-9\]+|en\\w+) lladdr/dev (eth[0-9]+|en\\w+|usb[0-9]+) lladdr/' ${DASHBOARD}
+
 # Configure lighttpd routing
 CONFSRC="${WEBROOT}/config/50-raspap-router.conf"
 LTROOT=$(grep "server.document-root" /etc/lighttpd/lighttpd.conf | awk -F '=' '{print $2}' | tr -d " \"")
