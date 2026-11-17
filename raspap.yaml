@@ -23,7 +23,7 @@ actions:
 
   - action: apt
     description: Install RaspAP dependencies (as its installer does on Debian 13)
-    packages: [lighttpd, git, hostapd, dnsmasq, iptables-persistent, vnstat, qrencode, php8.4-fpm, jq, isoquery, iso-codes, dhcpcd-base, iw, rsync, curl, wget, procps]
+    packages: [lighttpd, git, hostapd, dnsmasq, iptables-persistent, vnstat, qrencode, php8.4-fpm, jq, isoquery, iso-codes, dhcpcd-base, iw, rsync, curl, wget, procps, libjs-jquery, libjs-jquery-datatables]
 
   - action: run
     description: APT sources with security updates, image upgraded
@@ -83,6 +83,11 @@ actions:
     description: Enable networking services (RaspAP variant)
     chroot: true
     script: scripts/setup-networking-raspap.sh
+
+  - action: run
+    description: RaspAP release to install
+    chroot: false
+    command: cp ${RECIPEDIR}/raspap.version ${ROOTDIR}/tmp/raspap.version
 
   - action: run
     description: Install RaspAP web interface

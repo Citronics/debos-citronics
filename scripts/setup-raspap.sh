@@ -5,13 +5,34 @@ WEBROOT="/var/www/html"
 
 echo "==> Installing RaspAP..."
 
-# RaspAP at a fixed commit, with the plugins that commit pins: its last
-# release (3.3.5) predates support for Debian 13. Move it on purpose.
-RASPAP_COMMIT=cbd5f95ab03af3debdcee21c2791c35a5020ed71
+# The RaspAP release in raspap.version (tag and commit), with the plugins it
+# pins. A moved tag fails the build.
+read -r RASPAP_TAG RASPAP_COMMIT < <(grep -v '^#' /tmp/raspap.version)
 rm -rf ${WEBROOT}
 git clone https://github.com/RaspAP/raspap-webgui ${WEBROOT}
-git -C ${WEBROOT} checkout -q ${RASPAP_COMMIT}
+git -C ${WEBROOT} checkout -q "refs/tags/${RASPAP_TAG}"
+if [ "$(git -C ${WEBROOT} rev-parse HEAD)" != "${RASPAP_COMMIT}" ]; then
+    echo "RaspAP ${RASPAP_TAG} is not commit ${RASPAP_COMMIT}" >&2
+    exit 1
+fi
 git -C ${WEBROOT} submodule update --init --recursive
+echo "${RASPAP_TAG} ${RASPAP_COMMIT}" > /etc/raspap-version
+
+# RaspAP ships old copies of JavaScript libraries with known vulnerabilities.
+# jQuery and DataTables come from Debian's packages instead, which security
+# updates keep patched; Chart.js stays on 2.x, whose API RaspAP uses, at its
+# last release (2.9.4, CVE-2020-7746 fixed), verified by checksum.
+ln -sf /usr/share/javascript/jquery/jquery.min.js ${WEBROOT}/dist/jquery/jquery.min.js
+ln -sf /usr/share/javascript/jquery-datatables/jquery.dataTables.min.js \
+    ${WEBROOT}/dist/datatables/jquery.dataTables.min.js
+CHARTJS_TGZ=/tmp/chart.js-2.9.4.tgz
+curl -fsSL -o ${CHARTJS_TGZ} https://registry.npmjs.org/chart.js/-/chart.js-2.9.4.tgz
+echo "51c7c03a210370177a4ec50a4f0b5460f240e0e9371c960b37d7ea384776164a  ${CHARTJS_TGZ}" | sha256sum -c -
+tar -xzf ${CHARTJS_TGZ} -C /tmp package/dist
+for f in Chart.js Chart.min.js Chart.bundle.js Chart.bundle.min.js; do
+    cp /tmp/package/dist/$f ${WEBROOT}/dist/chart.js/$f
+done
+rm -rf ${CHARTJS_TGZ} /tmp/package
 
 # Configure lighttpd routing
 CONFSRC="${WEBROOT}/config/50-raspap-router.conf"

@@ -1,0 +1,3 @@
+# RaspAP release built into the RaspAP image: tag and the commit it must
+# point to. .github/workflows/raspap-sync.yml moves it to each new release.
+3.5.10 6494128d761445fa842bb2667cb7388572d9557f
