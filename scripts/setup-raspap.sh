@@ -7,7 +7,8 @@ echo "==> Installing RaspAP..."
 
 # The RaspAP release in raspap.version (tag and commit), with the plugins it
 # pins. A moved tag fails the build.
-read -r RASPAP_TAG RASPAP_COMMIT < <(grep -v '^#' /tmp/raspap.version)
+read -r RASPAP_TAG RASPAP_COMMIT < <(grep -v '^#' /var/cache/raspap.version)
+rm -f /var/cache/raspap.version
 rm -rf ${WEBROOT}
 git clone https://github.com/RaspAP/raspap-webgui ${WEBROOT}
 git -C ${WEBROOT} checkout -q "refs/tags/${RASPAP_TAG}"

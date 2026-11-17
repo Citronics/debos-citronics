@@ -87,7 +87,7 @@ actions:
   - action: run
     description: RaspAP release to install
     chroot: false
-    command: cp ${RECIPEDIR}/raspap.version ${ROOTDIR}/tmp/raspap.version
+    command: cp ${RECIPEDIR}/raspap.version ${ROOTDIR}/var/cache/raspap.version
 
   - action: run
     description: Install RaspAP web interface
