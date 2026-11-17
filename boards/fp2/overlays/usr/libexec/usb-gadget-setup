@@ -9,24 +9,30 @@ if ! mountpoint -q /sys/kernel/config; then
 fi
 
 echo "usb-gadget-setup: forcing peripheral mode via USB role switch"
+ROLE_SET=""
 for role_path in /sys/class/usb_role/*/role; do
-    [ -e "$role_path" ] && echo "device" > "$role_path" 2>/dev/null && echo "usb-gadget-setup: set $role_path to device"
+    [ -e "$role_path" ] && echo "device" > "$role_path" 2>/dev/null && echo "usb-gadget-setup: set $role_path to device" && ROLE_SET=1
 done
 for port_path in /sys/class/typec/port*/data_role; do
-    [ -e "$port_path" ] && echo "device" > "$port_path" 2>/dev/null && echo "usb-gadget-setup: set $port_path to device"
+    [ -e "$port_path" ] && echo "device" > "$port_path" 2>/dev/null && echo "usb-gadget-setup: set $port_path to device" && ROLE_SET=1
 done
 
-echo "usb-gadget-setup: waiting for UDC"
-UDC=""
-for i in $(seq 1 15); do
-    UDC=$(ls /sys/class/udc 2>/dev/null | head -1)
-    [ -n "$UDC" ] && break
-    sleep 1
-done
+# A UDC only exists while the port can be a device. After a role switch it
+# takes a moment to appear; without one (the Lime carrier's port in Default
+# mode is a USB host) there is none, and that is not an error: udev starts
+# this service again when a UDC appears.
+UDC=$(ls /sys/class/udc 2>/dev/null | head -1)
+if [ -z "$UDC" ] && [ -n "$ROLE_SET" ]; then
+    for i in $(seq 1 5); do
+        sleep 1
+        UDC=$(ls /sys/class/udc 2>/dev/null | head -1)
+        [ -n "$UDC" ] && break
+    done
+fi
 
 if [ -z "$UDC" ]; then
-    echo "usb-gadget-setup: no UDC found after 15s, aborting"
-    exit 1
+    echo "usb-gadget-setup: no UDC present (USB port in host mode): usb0 not set up"
+    exit 0
 fi
 echo "usb-gadget-setup: found UDC: $UDC"
 

@@ -1,0 +1,3 @@
+# Set up the USB network gadget whenever a device controller (UDC) appears,
+# e.g. when the USB port switches from host to device role after boot.
+SUBSYSTEM=="udc", ACTION=="add", TAG+="systemd", ENV{SYSTEMD_WANTS}+="usb-gadget.service"
