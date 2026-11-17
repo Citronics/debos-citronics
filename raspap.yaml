@@ -26,6 +26,11 @@ actions:
     packages: [lighttpd, git, hostapd, dnsmasq, iptables-persistent, vnstat, qrencode, php8.4-fpm, jq, isoquery, iso-codes, dhcpcd-base, iw, rsync, curl, wget, procps]
 
   - action: run
+    description: APT sources with security updates, image upgraded
+    chroot: true
+    script: scripts/setup-apt-sources.sh
+
+  - action: run
     description: Add citronics APT repository
     chroot: true
     script: scripts/add-citronics-repo.sh
