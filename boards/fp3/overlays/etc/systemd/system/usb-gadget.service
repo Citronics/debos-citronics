@@ -1,5 +1,5 @@
 [Unit]
-Description=USB Gadget (NCM network) setup for Fairphone 3
+Description=USB gadget (NCM network) setup
 After=local-fs.target
 Before=network-pre.target isc-dhcp-server.service citronics-net-id.service
 DefaultDependencies=no
@@ -7,7 +7,8 @@ Wants=network-pre.target
 
 [Service]
 Type=oneshot
-RemainAfterExit=yes
+# Not RemainAfterExit: udev starts it again when a UDC appears later
+RemainAfterExit=no
 ExecStart=/usr/libexec/usb-gadget-setup
 
 [Install]
