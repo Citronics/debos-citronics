@@ -9,5 +9,5 @@ ln -sf /etc/systemd/system/set-mac-from-serial.service /etc/systemd/system/multi
 # The SIM selection unit comes from citronics-lime-<board>
 systemctl enable msm-modem-uim-selection
 
-# Disable isc-dhcp-server (RaspAP uses dnsmasq for DHCP)
-rm -f /etc/systemd/system/multi-user.target.wants/isc-dhcp-server.service
+# DHCP, on the WiFi access point and on the USB link (080_usb0.conf), is
+# RaspAP's dnsmasq: the image has no isc-dhcp-server.
