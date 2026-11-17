@@ -516,6 +516,8 @@ class MobileDataManager implements PluginInterface
         $currentSection = 'General';
 
         foreach ($lines as $line) {
+            // mmcli colours some values (e.g. the state) with ANSI escapes
+            $line = preg_replace('/\x1b\[[0-9;]*[A-Za-z]/', '', $line);
             if (preg_match('/^[\s\-]+$/', $line) || trim($line) === '') {
                 continue;
             }
