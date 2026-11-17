@@ -102,6 +102,16 @@ cp ${WEBROOT}/config/090_raspap.conf /etc/dnsmasq.d/090_raspap.conf
 cp ${WEBROOT}/config/090_wlan0.conf /etc/dnsmasq.d/090_wlan0.conf
 cp ${WEBROOT}/config/config.php ${WEBROOT}/includes/
 cp ${WEBROOT}/config/dhcpcd.conf /etc/dhcpcd.conf
+# dhcpcd must leave alone the interfaces other services manage: the USB link
+# (citronics-net-id) and the modem (ModemManager and NetworkManager). Global
+# options go before the first "interface" block.
+awk '/^interface / && !done {
+	print "# Interfaces other services manage: the USB link and the modem"
+	print "denyinterfaces usb0 ipa_lan0 rmnet* qmapmux*"
+	print ""
+	done = 1
+} { print }' /etc/dhcpcd.conf > /etc/dhcpcd.conf.new
+mv /etc/dhcpcd.conf.new /etc/dhcpcd.conf
 cp ${WEBROOT}/config/defaults.json /etc/raspap/networking/
 chown www-data:www-data /etc/raspap/networking/defaults.json
 
