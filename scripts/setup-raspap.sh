@@ -5,10 +5,13 @@ WEBROOT="/var/www/html"
 
 echo "==> Installing RaspAP..."
 
-# Clone RaspAP with submodules
+# RaspAP at a fixed commit, with the plugins that commit pins: its last
+# release (3.3.5) predates support for Debian 13. Move it on purpose.
+RASPAP_COMMIT=cbd5f95ab03af3debdcee21c2791c35a5020ed71
 rm -rf ${WEBROOT}
-git clone --recurse-submodules https://github.com/RaspAP/raspap-webgui ${WEBROOT}
-git -C ${WEBROOT} submodule update --remote plugins
+git clone https://github.com/RaspAP/raspap-webgui ${WEBROOT}
+git -C ${WEBROOT} checkout -q ${RASPAP_COMMIT}
+git -C ${WEBROOT} submodule update --init --recursive
 
 # Configure lighttpd routing
 CONFSRC="${WEBROOT}/config/50-raspap-router.conf"
@@ -19,8 +22,8 @@ awk "{gsub(\"/REPLACE_ME\",\"$HTROOT\")}1" $CONFSRC > /tmp/50-raspap-router.conf
 cp /tmp/50-raspap-router.conf /etc/lighttpd/conf-available/
 ln -sf /etc/lighttpd/conf-available/50-raspap-router.conf /etc/lighttpd/conf-enabled/50-raspap-router.conf
 
-# Enable PHP for lighttpd
-lighttpd-enable-mod fastcgi-php
+# Enable PHP for lighttpd: Debian 13 has PHP-FPM, as RaspAP's installer uses
+lighttpd-enable-mod fastcgi-php-fpm
 
 # Copy sudoers rules
 cp ${WEBROOT}/installers/raspap.sudoers /etc/sudoers.d/090_raspap
@@ -111,11 +114,11 @@ rm -f /etc/systemd/system/hostapd.service
 # Enable: create WantedBy symlink
 ln -sf /lib/systemd/system/hostapd.service /etc/systemd/system/multi-user.target.wants/hostapd.service
 
-# Optimize PHP - use php8.2 for bookworm
-PHP_VERSION="8.2"
-if [ -f /etc/php/${PHP_VERSION}/cgi/php.ini ]; then
-    sed -i -E 's/^session\.cookie_httponly\s*=\s*(0|([O|o]ff)|([F|f]alse)|([N|n]o))\s*$/session.cookie_httponly = 1/' /etc/php/${PHP_VERSION}/cgi/php.ini
-    sed -i -E 's/^;?opcache\.enable\s*=\s*(0|([O|o]ff)|([F|f]alse)|([N|n]o))\s*$/opcache.enable = 1/' /etc/php/${PHP_VERSION}/cgi/php.ini
+# Optimize PHP (Debian 13: PHP 8.4, FPM)
+PHP_INI=/etc/php/8.4/fpm/php.ini
+if [ -f "$PHP_INI" ]; then
+    sed -i -E 's/^session\.cookie_httponly\s*=\s*(0|([O|o]ff)|([F|f]alse)|([N|n]o))\s*$/session.cookie_httponly = 1/' "$PHP_INI"
+    sed -i -E 's/^;?opcache\.enable\s*=\s*(0|([O|o]ff)|([F|f]alse)|([N|n]o))\s*$/opcache.enable = 1/' "$PHP_INI"
     phpenmod opcache || true
 fi
 

@@ -18,7 +18,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu, debian]
+        os: [ubuntu, debian, raspap]
         board: [fp2, fp3]
         include:
           - board: fp2

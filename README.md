@@ -41,7 +41,7 @@ Architecture is auto-derived from the board name (fp3 is arm64, others are armhf
 
 - `ubuntu.yaml`: Ubuntu Resolute (26.04 LTS).
 - `debian.yaml`: Debian Trixie.
-- `raspap.yaml`: Debian Bookworm with RaspAP WiFi AP and MobileDataManager.
+- `raspap.yaml`: Debian trixie with the RaspAP WiFi access point and MobileDataManager.
 
 ## Prerequisites
 

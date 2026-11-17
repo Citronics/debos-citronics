@@ -3,33 +3,32 @@
 {{- $architecture := or .architecture (cond (eq $board "fp3") "arm64" "armhf") -}}
 {{- $image := or .image (printf "raspap-%s-%s.img" $carrier $board) -}}
 
+# The Debian image (debian.yaml) with the RaspAP WiFi access point and the
+# MobileDataManager plugin on top.
+
 architecture: {{ $architecture }}
 
 actions:
   - action: debootstrap
-    suite: "bookworm"
+    suite: "trixie"
     components:
       - main
+      - non-free-firmware
     mirror: https://deb.debian.org/debian
     variant: minbase
-
-  - action: run
-    description: Enable non-free-firmware Debian repo
-    chroot: true
-    command: sed -i 's/main$/main non-free-firmware/g' /etc/apt/sources.list
 
   - action: apt
     description: Install base system packages
     packages: [udev, ca-certificates, coreutils, sudo, openssh-server, adduser, systemd, systemd-sysv, systemd-resolved, nano, vim, qrtr-tools, libqmi-utils, rmtfs, udev, kmod, network-manager, modemmanager, wpasupplicant, ifupdown, isc-dhcp-client, isc-dhcp-server, systemd-timesyncd, bluetooth, kpartx, cloud-utils, fake-hwclock, wireless-regdb, usbutils, iputils-ping]
 
   - action: apt
-    description: Install RaspAP dependencies
-    packages: [lighttpd, git, hostapd, dnsmasq, iptables-persistent, vnstat, qrencode, php8.2-cgi, jq, isoquery, dhcpcd-base, curl, wget, procps]
+    description: Install RaspAP dependencies (as its installer does on Debian 13)
+    packages: [lighttpd, git, hostapd, dnsmasq, iptables-persistent, vnstat, qrencode, php8.4-fpm, jq, isoquery, iso-codes, dhcpcd-base, iw, rsync, curl, wget, procps]
 
   - action: run
     description: Add citronics APT repository
     chroot: true
-    command: echo "deb [trusted=yes] https://citronics.github.io/deb-packages/ stable main" | tee /etc/apt/sources.list.d/citronics.list
+    script: scripts/add-citronics-repo.sh
 
   - action: apt
     description: Install Citronics kernel and firmware
@@ -109,9 +108,19 @@ actions:
     chroot: true
     script: scripts/verify-boot.sh
 
+  - action: run
+    description: License manifest of the image
+    chroot: true
+    script: scripts/license-manifest.sh
+
+  - action: run
+    description: License manifest next to the image
+    chroot: false
+    command: cp ${ROOTDIR}/usr/share/doc/citronics-image/licenses.txt ${ARTIFACTDIR}/{{ $image }}.licenses.txt
+
   - action: image-partition
     imagename: {{ $image }}
-    imagesize: 1628MB
+    imagesize: 1792MB
     partitiontype: msdos
     mountpoints:
       - mountpoint: /
