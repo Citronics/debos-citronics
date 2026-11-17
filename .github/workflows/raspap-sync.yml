@@ -1,0 +1,45 @@
+name: RaspAP upstream sync
+
+# Keeps the RaspAP image on RaspAP's latest release: when upstream releases,
+# raspap.version moves to the new tag and commit and the images are rebuilt.
+on:
+  schedule:
+    - cron: '41 4 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-26.04
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Move to RaspAP's latest release
+        id: sync
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag=$(gh api repos/RaspAP/raspap-webgui/releases/latest --jq .tag_name)
+          commit=$(git ls-remote https://github.com/RaspAP/raspap-webgui "refs/tags/${tag}^{}" | cut -f1)
+          [ -n "$commit" ] || commit=$(git ls-remote https://github.com/RaspAP/raspap-webgui "refs/tags/${tag}" | cut -f1)
+          [ -n "$tag" ] && [ -n "$commit" ] || { echo "cannot resolve RaspAP's latest release"; exit 1; }
+          current=$(grep -v '^#' raspap.version)
+          if [ "$current" = "$tag $commit" ]; then
+            echo "RaspAP $tag is already built"
+            exit 0
+          fi
+          sed -i "s/^[^#].*/$tag $commit/" raspap.version
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -am "raspap: update to RaspAP $tag"
+          git push
+          echo "updated=true" >> "$GITHUB_OUTPUT"
+
+      - name: Rebuild the images
+        if: steps.sync.outputs.updated == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run build-images.yml --ref main
