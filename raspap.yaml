@@ -1,6 +1,6 @@
 {{- $carrier := .carrier -}}
 {{- $board := .board -}}
-{{- $architecture := or .architecture (cond (eq $board "fp3") "arm64" "armhf") -}}
+{{- $architecture := .architecture -}}
 {{- $image := or .image (printf "raspap-%s-%s.img" $carrier $board) -}}
 
 # The Debian image (debian.yaml) with the RaspAP WiFi access point and the

@@ -62,16 +62,16 @@ Run debos with the carrier and board parameters:
 
 ```bash
 # FP2 — Ubuntu
-sudo debos -t carrier:lime -t board:fp2 ubuntu.yaml
+sudo debos -t carrier:lime -t board:fp2 -t architecture:armhf ubuntu.yaml
 
 # FP3 — Ubuntu
-sudo debos -t carrier:lime -t board:fp3 ubuntu.yaml
+sudo debos -t carrier:lime -t board:fp3 -t architecture:arm64 ubuntu.yaml
 
 # FP2 — Debian
-sudo debos -t carrier:lime -t board:fp2 debian.yaml
+sudo debos -t carrier:lime -t board:fp2 -t architecture:armhf debian.yaml
 
 # FP3 — RaspAP
-sudo debos -t carrier:lime -t board:fp3 raspap.yaml
+sudo debos -t carrier:lime -t board:fp3 -t architecture:arm64 raspap.yaml
 ```
 
 ## Flashing
