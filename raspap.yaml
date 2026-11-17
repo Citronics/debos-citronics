@@ -19,7 +19,7 @@ actions:
 
   - action: apt
     description: Install base system packages
-    packages: [udev, ca-certificates, coreutils, sudo, openssh-server, adduser, systemd, systemd-sysv, systemd-resolved, nano, vim, qrtr-tools, libqmi-utils, rmtfs, udev, kmod, network-manager, modemmanager, wpasupplicant, ifupdown, isc-dhcp-client, isc-dhcp-server, systemd-timesyncd, bluetooth, kpartx, cloud-utils, fake-hwclock, wireless-regdb, usbutils, iputils-ping]
+    packages: [udev, ca-certificates, coreutils, sudo, openssh-server, adduser, systemd, systemd-sysv, systemd-resolved, nano, vim, qrtr-tools, libqmi-utils, rmtfs, udev, kmod, network-manager, modemmanager, wpasupplicant, ifupdown, isc-dhcp-client, systemd-timesyncd, bluetooth, kpartx, cloud-utils, fake-hwclock, wireless-regdb, usbutils, iputils-ping]
 
   - action: apt
     description: Install RaspAP dependencies (as its installer does on Debian 13)

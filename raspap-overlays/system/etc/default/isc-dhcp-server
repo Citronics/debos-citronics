@@ -1,3 +1,0 @@
-# ISC DHCP server is not used in the RaspAP image.
-# DHCP is handled by dnsmasq.
-INTERFACES=""
