@@ -145,6 +145,20 @@ debos-citronics/
 
 ## Post-boot setup
 
+### Connecting over USB
+
+A phone whose USB port is a device (the Fairphone 3; not the Lime carrier,
+whose port is a host) is a USB network adapter to the computer it is
+plugged into, which gets an address from the phone over DHCP. Each phone
+has its own link, a /30 in `10.250.0.0/16` derived from its eMMC serial,
+so several phones on one computer never clash: the computer gets `.2` and
+the phone is `.1`.
+
+```sh
+ip -4 -br addr | grep 10.250     # e.g. enp0s20u2  UP  10.250.177.162/30
+ssh citro@10.250.177.161         # the same address, ending in .1
+```
+
 ### Using WiFi
 
 Networking is managed by Network Manager's `nmcli`.
