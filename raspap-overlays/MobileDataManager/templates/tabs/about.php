@@ -23,7 +23,7 @@
   <div class="col-12 mb-3">
     <h5><?php echo _("Quick setup"); ?></h5>
     <p><?php echo _("From the command line:"); ?></p>
-    <pre class="bg-light p-2">nmcli connection add type gsm ifname '*' con-name gsm apn &lt;YOUR_APN&gt;
+    <pre class="bg-light p-2">nmcli connection add type gsm ifname '*' con-name gsm apn &lt;YOUR_APN&gt; gsm.initial-eps-bearer-apn &lt;YOUR_APN&gt;
 nmcli connection up gsm</pre>
     <p><?php echo _("Or use the Connection tab in this plugin to configure the same via the web interface."); ?></p>
   </div>

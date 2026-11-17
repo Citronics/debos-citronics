@@ -169,8 +169,12 @@ Networking is managed by Network Manager's `nmcli`.
 ### Using the modem
 
 1. Connect to your device via SSH.
-2. Create the connection: `nmcli connection add type gsm ifname '*' con-name gsm apn <YOUR APN>`
+2. Create the connection: `nmcli connection add type gsm ifname '*' con-name gsm apn <YOUR APN> gsm.initial-eps-bearer-apn <YOUR APN>`
 3. Bring the connection up: `nmcli connection up gsm`
+
+`gsm.initial-eps-bearer-apn` is the APN the modem attaches to LTE with: left at another operator's APN (the modem keeps the one it was given under Android), the connection fails on LTE (`multiple-connection-to-same-pdn-not-allowed`) or the phone stays on 2G. On the FP2, the modem's settings come back from its eMMC storage at every boot, so `citronics-lime-fp2` also sets LTE first and the connection's APN as the attach APN at boot, before ModemManager starts (`msm-modem-attach-apn.service`, which also covers connections created without `gsm.initial-eps-bearer-apn`). Mobile data is up about a minute after boot.
+
+The images install ModemManager from the Citronics repository: Debian trixie's and Ubuntu 26.04's crash at every start after the first one on these phones, and cannot set the FP2 modem's attach APN ([modemmanager-deb](https://github.com/Citronics/modemmanager-deb)). On an installation from an older image, run `sudo apt update && sudo apt full-upgrade` twice: the first run adds the repository's `trixie`/`resolute` suite, the second installs the patched ModemManager.
 
 ### Lime: the header (GPIO, I2C, SPI, ADC, UART)
 
