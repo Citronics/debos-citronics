@@ -28,7 +28,7 @@ actions:
     script: scripts/add-citronics-repo.sh
 
   - action: apt
-    packages: [initramfs-tools, citronics-{{ $carrier }}-{{ $board }}]
+    packages: [initramfs-tools, citronics-{{ $carrier }}-{{ $board }}, modemmanager, libmm-glib0]
 
   - action: run
     chroot: true

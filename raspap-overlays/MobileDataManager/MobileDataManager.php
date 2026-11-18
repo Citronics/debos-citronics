@@ -165,7 +165,9 @@ class MobileDataManager implements PluginInterface
 
     /**
      * Create or update a GSM connection profile via nmcli.
-     * This mirrors: nmcli connection add type gsm ifname '*' con-name gsm apn <APN>
+     * This mirrors: nmcli connection add type gsm ifname '*' con-name gsm apn <APN> gsm.initial-eps-bearer-apn <APN>
+     * The modem attaches to LTE with the initial EPS bearer APN: when it
+     * differs from the data APN, the network may refuse the data connection.
      */
     private function saveConnectionSettings(\RaspAP\Messages\StatusMessage $status): void
     {
@@ -185,8 +187,9 @@ class MobileDataManager implements PluginInterface
 
         if ($connectionExists) {
             $cmd = sprintf(
-                "sudo nmcli connection modify %s gsm.apn %s",
+                "sudo nmcli connection modify %s gsm.apn %s gsm.initial-eps-bearer-apn %s",
                 escapeshellarg($conName),
+                escapeshellarg($apn),
                 escapeshellarg($apn)
             );
             if (!empty($username)) {
@@ -206,9 +209,10 @@ class MobileDataManager implements PluginInterface
             }
         } else {
             $cmd = sprintf(
-                "sudo nmcli connection add type gsm ifname %s con-name %s apn %s",
+                "sudo nmcli connection add type gsm ifname %s con-name %s apn %s gsm.initial-eps-bearer-apn %s",
                 escapeshellarg('*'),
                 escapeshellarg($conName),
+                escapeshellarg($apn),
                 escapeshellarg($apn)
             );
             if (!empty($username)) {
