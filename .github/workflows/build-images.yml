@@ -11,6 +11,12 @@ on:
 permissions:
   contents: write
 
+# Every run deletes and recreates the 'nightly' release: overlapping runs
+# would publish a mix, or an older run's images last.
+concurrency:
+  group: build-images
+  cancel-in-progress: false
+
 jobs:
   build:
     name: Build ${{ matrix.os }}-lime-${{ matrix.board }}
