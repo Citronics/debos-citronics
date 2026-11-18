@@ -151,6 +151,29 @@ IPTEOF
 rm -f /etc/systemd/system/hostapd.service
 # Enable: create WantedBy symlink
 ln -sf /lib/systemd/system/hostapd.service /etc/systemd/system/multi-user.target.wants/hostapd.service
+# The Wi-Fi interface appears seconds after boot (firmware loading):
+# started before it, hostapd fails
+mkdir -p /etc/systemd/system/hostapd.service.d
+cat > /etc/systemd/system/hostapd.service.d/citronics-wlan0.conf << 'EOF'
+[Unit]
+Wants=sys-subsystem-net-devices-wlan0.device
+After=sys-subsystem-net-devices-wlan0.device
+EOF
+
+# Network activity monitor, as RaspAP's installer sets it up: servicestart.sh
+# starts it for wlan0. Compiled here; the compiler is removed afterwards.
+before=$(dpkg-query -W -f '${Package}\n' | sort)
+apt-get install -y --no-install-recommends gcc libc6-dev
+gcc -O2 -o /usr/local/bin/raspap-network-monitor ${WEBROOT}/installers/raspap-network-monitor.c
+added=$(dpkg-query -W -f '${Package}\n' | sort | comm -13 <(echo "$before") -)
+apt-get purge -y $added
+cp ${WEBROOT}/installers/raspap-network-activity@.service /lib/systemd/system/
+ln -sf /lib/systemd/system/raspap-network-activity@.service \
+  /etc/systemd/system/multi-user.target.wants/raspap-network-activity@wlan0.service
+
+# systemd-resolved is the system's resolver: dnsmasq does not register
+# itself through resolvconf (which would ask systemd-networkd, not installed)
+echo 'DNSMASQ_EXCEPT="lo"' >> /etc/default/dnsmasq
 
 # Optimize PHP (Debian 13: PHP 8.4, FPM)
 PHP_INI=/etc/php/8.4/fpm/php.ini
